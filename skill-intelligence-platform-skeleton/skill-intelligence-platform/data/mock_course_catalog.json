@@ -1,0 +1,1059 @@
+{
+  "meta": {
+    "description": "SYNTHETIC prototype course catalog for the AI Skill Intelligence Platform. Every record is fictional. Schema field names are informed by observed real iGOT course-page structure (title, provider, level badge, duration, modules, final assessment + practice tests, license, price, competency tags) but no real course content, descriptions, or catalog data has been copied.",
+    "total_courses": 50,
+    "competencies_covered": 33
+  },
+  "courses": [
+    {
+      "course_id": "MOCK-iGOT-OS-01-BEG",
+      "title": "Foundations of Survey & Questionnaire Design",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-01",
+          "competency_name": "Survey Design"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-01-ADV",
+      "title": "Advanced Survey Design for Official Statistics",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-01",
+          "competency_name": "Survey Design"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-02-BEG",
+      "title": "Introduction to Sampling Techniques",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-02",
+          "competency_name": "Sampling"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-02-ADV",
+      "title": "Advanced Sampling Methods & Estimation",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-02",
+          "competency_name": "Sampling"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-03-BEG",
+      "title": "Basics of National Accounts (GDP/GVA)",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-03",
+          "competency_name": "National Accounts"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-03-INT",
+      "title": "National Accounts: Supply-Use Tables & Sector Accounts",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-03",
+          "competency_name": "National Accounts"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-04-BEG",
+      "title": "Understanding CPI & WPI",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-04",
+          "competency_name": "Price Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-05-BEG",
+      "title": "Introduction to Labour Force Statistics",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-05",
+          "competency_name": "Labour Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-05-INT",
+      "title": "Labour Statistics: PLFS Concepts & ILO Standards",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-05",
+          "competency_name": "Labour Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-06-BEG",
+      "title": "Basics of Agricultural Statistics",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-06",
+          "competency_name": "Agricultural Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-06-INT",
+      "title": "Agricultural Surveys & Crop Estimation",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-06",
+          "competency_name": "Agricultural Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-07-BEG",
+      "title": "Introduction to Industrial Statistics (ASI, IIP)",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-07",
+          "competency_name": "Industrial Statistics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-08-BEG",
+      "title": "SDG Indicator Framework for Official Statistics",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-08",
+          "competency_name": "SDG Indicators"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-09-BEG",
+      "title": "Introduction to Statistical Metadata Standards",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-09",
+          "competency_name": "Metadata Standards"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-09-ADV",
+      "title": "Applying NMDS & CMMI in Practice",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-09",
+          "competency_name": "Metadata Standards"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-OS-10-BEG",
+      "title": "Foundations of Statistical Data Quality",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-10",
+          "competency_name": "Data Quality Frameworks"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-OS-10-ADV",
+      "title": "Statistical Quality Assessment Framework Workshop",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "OS-10",
+          "competency_name": "Data Quality Frameworks"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-01-BEG",
+      "title": "Python for Beginners",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-01",
+          "competency_name": "Python"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-01-INT",
+      "title": "Python for Statistical Data Analysis",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-01",
+          "competency_name": "Python"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-02-BEG",
+      "title": "Introduction to R Programming",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-02",
+          "competency_name": "R"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-TC-02-INT",
+      "title": "R for Survey Data Analysis",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-02",
+          "competency_name": "R"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-03-BEG",
+      "title": "SQL Fundamentals",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-03",
+          "competency_name": "SQL"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-03-ADV",
+      "title": "Advanced SQL for Data Management",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-03",
+          "competency_name": "SQL"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-04-BEG",
+      "title": "Introduction to Stata",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-04",
+          "competency_name": "Stata"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-05-BEG",
+      "title": "Introduction to SPSS",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-05",
+          "competency_name": "SPSS"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-06-BEG",
+      "title": "Introduction to SAS",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-06",
+          "competency_name": "SAS"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-07-BEG",
+      "title": "GIS Basics for Statistical Mapping",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-07",
+          "competency_name": "GIS"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-TC-07-INT",
+      "title": "GIS Applications in Official Statistics",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-07",
+          "competency_name": "GIS"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-08-BEG",
+      "title": "Data Visualization Fundamentals",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-08",
+          "competency_name": "Data Visualization"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-08-ADV",
+      "title": "Advanced Dashboarding & Visual Analytics",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-08",
+          "competency_name": "Data Visualization"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-09-BEG",
+      "title": "Introduction to AI & Machine Learning",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-09",
+          "competency_name": "AI/ML"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-NSSTA-TC-09-INT",
+      "title": "Machine Learning for Official Statistics",
+      "provider_type": "NSSTA",
+      "provider_name": "NSSTA",
+      "delivery_mode": "Instructor-led",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-09",
+          "competency_name": "AI/ML"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-10-BEG",
+      "title": "Cloud Computing Fundamentals",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-10",
+          "competency_name": "Cloud Computing"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-11-BEG",
+      "title": "Introduction to APIs & Data Integration",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-11",
+          "competency_name": "APIs"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-11-INT",
+      "title": "Building API-based Data Pipelines",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-11",
+          "competency_name": "APIs"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-TC-12-BEG",
+      "title": "Open Data Principles & Practices",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "TC-12",
+          "competency_name": "Open Data"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-01-BEG",
+      "title": "Cybersecurity Awareness for Government Officials",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-01",
+          "competency_name": "Cybersecurity"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-02-BEG",
+      "title": "Data Privacy Fundamentals",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-02",
+          "competency_name": "Data Privacy"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-02-INT",
+      "title": "Data Privacy & Protection in Government Systems",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Intermediate",
+      "duration_hours": 6,
+      "modules_count": 6,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-02",
+          "competency_name": "Data Privacy"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-03-BEG",
+      "title": "Digital Signatures & e-Authentication",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-03",
+          "competency_name": "Digital Signatures"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-04-BEG",
+      "title": "Introduction to Government Cloud (MeghRaj)",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-04",
+          "competency_name": "Government Cloud"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-DG-05-BEG",
+      "title": "Understanding Digital Public Infrastructure",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "DG-05",
+          "competency_name": "Digital Public Infrastructure"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-01-BEG",
+      "title": "Leadership Essentials for Government Officials",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-01",
+          "competency_name": "Leadership"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-02-BEG",
+      "title": "Effective Communication in Public Service",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-02",
+          "competency_name": "Communication"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-02-ADV",
+      "title": "Advanced Communication & Presentation Skills",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-02",
+          "competency_name": "Communication"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-03-BEG",
+      "title": "Project Management Basics for Government",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-03",
+          "competency_name": "Project Management"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-04-BEG",
+      "title": "Ethics in Public Service & Data Representation",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-04",
+          "competency_name": "Ethics"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-05-BEG",
+      "title": "Decision Making Fundamentals",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-05",
+          "competency_name": "Decision Making"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-05-ADV",
+      "title": "Advanced Decision Making Under Uncertainty",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Advanced",
+      "duration_hours": 8,
+      "modules_count": 8,
+      "has_final_assessment": true,
+      "practice_tests_count": 4,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-05",
+          "competency_name": "Decision Making"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    },
+    {
+      "course_id": "MOCK-iGOT-BM-06-BEG",
+      "title": "Change Management Essentials",
+      "provider_type": "iGOT",
+      "provider_name": "iGOT Karmayogi",
+      "delivery_mode": "Self-paced",
+      "level": "Beginner",
+      "duration_hours": 3,
+      "modules_count": 4,
+      "has_final_assessment": true,
+      "practice_tests_count": 2,
+      "price": "Free",
+      "license": "CC BY 4.0",
+      "competencies": [
+        {
+          "competency_id": "BM-06",
+          "competency_name": "Change Management"
+        }
+      ],
+      "source_note": "SYNTHETIC \u2014 fictional prototype record, not real iGOT/NSSTA catalog data"
+    }
+  ]
+}

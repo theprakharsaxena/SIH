@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: sih_postgres
+    environment:
+      POSTGRES_USER: sih
+      POSTGRES_PASSWORD: sih_secret
+      POSTGRES_DB: skill_intelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sih -d skill_intelligence"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: sih_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    environment:
+      DATABASE_URL: postgresql://sih:sih_secret@db:5432/skill_intelligence
+      COURSE_CATALOG_PROVIDER: mock
+      MOCK_CATALOG_PATH: /app/data/mock_course_catalog.json
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      JWT_SECRET: dev_jwt_secret_change_in_prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  postgres_data:

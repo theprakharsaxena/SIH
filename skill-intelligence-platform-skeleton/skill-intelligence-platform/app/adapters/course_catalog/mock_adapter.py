@@ -22,7 +22,7 @@ class MockCourseCatalogAdapter(CourseCatalogProvider):
         records = []
         for c in data["courses"]:
             records.append(CourseRecord(
-                external_id=None,
+                external_id=c.get("course_id"),
                 title=c["title"],
                 provider_type=c["provider_type"],
                 provider_name=c["provider_name"],

@@ -75,6 +75,57 @@ const ROLE_COMPETENCIES = {
   DEFAULT:  ['Statistical Analysis', 'Data Collection', 'Communication', 'Digital Literacy', 'Report Writing'],
 };
 
+function getDynamicRecommendedCourses(gapItems, role, department) {
+  if (!gapItems || gapItems.length === 0) {
+    return [
+      { provider: 'iGOT', title: 'Foundation in Statistical Methods & Official Surveys', level: 'Beginner', hrs: 4, reason: `Recommended for ${role || 'Officer'} in ${department || 'MoSPI'}.` },
+      { provider: 'NSSTA', title: 'Survey Design & Data Quality Frameworks', level: 'Intermediate', hrs: 6, reason: `Matched to core requirements for ${role || 'Officer'}.` },
+      { provider: 'iGOT', title: 'Data Privacy & DPDP Act Compliance', level: 'Beginner', hrs: 3, reason: 'Mandatory digital governance competency.' },
+    ];
+  }
+
+  const COURSE_MAP = {
+    'Survey Design': { title: 'Foundations of Survey & Questionnaire Design', provider: 'iGOT', level: 'Beginner', hrs: 3 },
+    'Sampling Methodology': { title: 'Introduction to Sampling Techniques in Official Statistics', provider: 'NSSTA', level: 'Intermediate', hrs: 6 },
+    'Field Data Collection': { title: 'Field Enumeration & CAPI Digital Data Collection', provider: 'NSSTA', level: 'Intermediate', hrs: 5 },
+    'Data Entry & Validation': { title: 'Data Quality Check & Tabulation Procedures', provider: 'iGOT', level: 'Beginner', hrs: 3 },
+    'Basic Statistics': { title: 'Statistical Inference & Descriptive Analytics', provider: 'iGOT', level: 'Beginner', hrs: 4 },
+    'Statistical Analysis': { title: 'Applied Statistical Analysis & Data Processing', provider: 'iGOT', level: 'Intermediate', hrs: 5 },
+    'Data Privacy (DPDP Act)': { title: 'Data Privacy & DPDP Act 2023 Compliance', provider: 'iGOT', level: 'Beginner', hrs: 3 },
+    'GIS & Mapping': { title: 'GIS & Spatial Data Visualization for Statisticians', provider: 'NSSTA', level: 'Intermediate', hrs: 8 },
+    'Python / R': { title: 'Python & R for Official Data Automation', provider: 'iGOT', level: 'Intermediate', hrs: 10 },
+    'Report Writing': { title: 'Official Survey Reporting & Policy Documentation', provider: 'NSSTA', level: 'Beginner', hrs: 4 },
+    'Leadership': { title: 'Executive Leadership & Team Coordination in Govt', provider: 'iGOT', level: 'Intermediate', hrs: 6 },
+    'Policy Analysis': { title: 'Policy Analysis & Evidence-Based Governance', provider: 'NSSTA', level: 'Advanced', hrs: 12 },
+    'Data Governance': { title: 'Data Governance Frameworks & National Data Sharing', provider: 'iGOT', level: 'Intermediate', hrs: 6 },
+    'Stakeholder Management': { title: 'Public Sector Stakeholder Management', provider: 'iGOT', level: 'Intermediate', hrs: 4 },
+    'Digital Literacy': { title: 'Digital Public Infrastructure & Cloud Security', provider: 'iGOT', level: 'Beginner', hrs: 3 },
+    'Communication': { title: 'Effective Communication for Statistical Officers', provider: 'iGOT', level: 'Beginner', hrs: 3 },
+    'Advanced Statistics': { title: 'Time Series Analysis & Econometric Modeling', provider: 'NSSTA', level: 'Advanced', hrs: 14 },
+    'AI & Machine Learning': { title: 'Machine Learning Applications in Official Statistics', provider: 'iGOT', level: 'Advanced', hrs: 15 },
+    'Strategic Planning': { title: 'Strategic Planning & National Accounts Management', provider: 'NSSTA', level: 'Advanced', hrs: 10 },
+    'Cybersecurity': { title: 'Cybersecurity & Government Data Protection', provider: 'iGOT', level: 'Intermediate', hrs: 5 },
+    'Ethics in Public Service': { title: 'Ethics, Confidentiality & Integrity in Statistics', provider: 'NSSTA', level: 'Beginner', hrs: 2 },
+  };
+
+  return gapItems.slice(0, 3).map((item) => {
+    const match = COURSE_MAP[item.name] || {
+      title: `Mastering ${item.name}`,
+      provider: 'iGOT',
+      level: item.gap > 1.5 ? 'Beginner' : 'Intermediate',
+      hrs: 4,
+    };
+
+    return {
+      provider: match.provider,
+      title: match.title,
+      level: match.level,
+      hrs: match.hrs,
+      reason: `Directly targets your ${item.name} gap (Deficit: ${item.gap.toFixed(1)} for ${role}).`,
+    };
+  });
+}
+
 /* ─── Helper components ──────────────────────────────────────────────────── */
 function StepIndicator({ current }) {
   return (
@@ -766,11 +817,18 @@ Self-Assessment Average: ${selfAvg}/5
               <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
                 📖 Recommended Courses (personalised after dashboard loads)
               </div>
-              {[
-                { provider: 'iGOT', title: 'Foundation in Statistical Methods', level: 'Beginner', hrs: 4, reason: 'Closes your biggest gaps in core statistical competencies.' },
-                { provider: 'NSSTA', title: 'Survey Design & Field Operations', level: 'Intermediate', hrs: 6, reason: 'Matched to your role requirements and current experience level.' },
-                { provider: 'iGOT', title: 'Data Privacy & DPDP Act Compliance', level: 'Beginner', hrs: 3, reason: 'Critical competency for your role — high priority.' },
-              ].map((c, i) => (
+              {getDynamicRecommendedCourses(
+                gapPreview
+                  .map(({ name, selfScore }) => {
+                    const blended = ((quizScore / 100) * 5 * 0.30) + (selfScore * 0.10) + (2.5 * 0.60);
+                    const gap = Math.max(0, REQUIRED_LEVEL - blended);
+                    return { name, gap };
+                  })
+                  .filter(g => g.gap > 0.3)
+                  .sort((a, b) => b.gap - a.gap),
+                s1.role,
+                s1.department
+              ).map((c, i) => (
                 <div key={i} style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '0.6rem' }}>
                   <div style={{ padding: '0.4rem 0.875rem', background: c.provider === 'iGOT' ? '#eef2fb' : '#fff3e0', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, color: c.provider === 'iGOT' ? NAVY : ORANGE }}>{c.provider}</span>

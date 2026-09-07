@@ -126,6 +126,68 @@ function getDynamicRecommendedCourses(gapItems, role, department) {
   });
 }
 
+function NKMGuide({ role }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', overflow: 'hidden' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          width: '100%', padding: '0.75rem 1rem', background: '#f1f5f9', border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer',
+          fontWeight: 700, color: NAVY, fontSize: '0.82rem', textAlign: 'left'
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          💡 <span>Understanding AI Extraction & MoSPI (NKM) Competency Framework</span>
+        </span>
+        <span style={{ fontSize: '0.75rem', color: ORANGE, fontWeight: 700 }}>
+          {open ? 'Hide Guide ▲' : 'Show Framework & Codes Guide ▼'}
+        </span>
+      </button>
+
+      {open && (
+        <div style={{ padding: '1rem', fontSize: '0.78rem', color: '#334155', lineHeight: 1.55 }}>
+          <div style={{ fontWeight: 700, color: NAVY, marginBottom: '0.4rem', fontSize: '0.84rem' }}>
+            🏛️ What is Pre-Defined (Standardized NKM Framework)?
+          </div>
+          <p style={{ margin: '0 0 0.75rem 0', color: '#475569' }}>
+            The National Knowledge Mission (NKM) Competency Framework defines <strong>35 Official Competencies</strong> across 4 MoSPI domains. Clicking <strong>"Extract with AI"</strong> reads your CV text and tags facts with these official codes:
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.85rem' }}>
+            <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: '0.2rem' }}>📊 Official Statistics (OS-01 to OS-12)</div>
+              <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Survey Design, Sampling, CPI, National Accounts (GDP), Price Index, Labour Statistics (PLFS).</div>
+            </div>
+
+            <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, color: '#047857', marginBottom: '0.2rem' }}>💻 Technical & Computing (TC-01 to TC-12)</div>
+              <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Python, R, SQL, GIS Mapping, Stata, SPSS, Data Visualization, AI/ML, Cloud Computing.</div>
+            </div>
+
+            <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, color: '#7c3aed', marginBottom: '0.2rem' }}>🏛️ Digital Governance (DG-01 to DG-05)</div>
+              <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Cybersecurity, Data Privacy (DPDP Act 2023), Digital Signatures, Gov Cloud, DPI.</div>
+            </div>
+
+            <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontWeight: 700, color: '#b45309', marginBottom: '0.2rem' }}>🤝 Behavioural & Managerial (BM-01 to BM-06)</div>
+              <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Executive Leadership, Stakeholder Communication, Project Management, Ethics in Public Service.</div>
+            </div>
+          </div>
+
+          <div style={{ background: '#eff6ff', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #bfdbfe', color: '#1e40af' }}>
+            🎯 <strong>Role Required Target Score (1.0 – 5.0):</strong> Each cadre level (e.g. <strong>{role || 'JSO / SSO'}</strong>) has official target levels stored in the database. The extracted facts link directly to your target levels to calculate your skill gaps!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Helper components ──────────────────────────────────────────────────── */
 function StepIndicator({ current }) {
   return (
@@ -515,6 +577,8 @@ Self-Assessment Average: ${selfAvg}/5
             <InfoBox>
               🤖 <strong>AI Moment #1.</strong> The system reads your messy, unstructured text and pulls out clean facts — years of experience, education, prior training. It only <em>extracts</em> facts, it does not judge you. You'll see what was found and can correct it.
             </InfoBox>
+
+            <NKMGuide role={s1.role} />
 
             <div>
               <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.5rem' }}>

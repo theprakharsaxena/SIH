@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchGapAnalysis, fetchRecommendations } from '../../services/api';
+import LearningPathRoadmap from '../../components/LearningPathRoadmap';
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
@@ -150,74 +151,56 @@ export default function LearnerDashboardPage() {
             <StatCard value={proficient} label="Proficient Areas" color="#16a34a" icon={CheckCircle} />
           </div>
 
-          {/* Two column */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            {/* Competency breakdown */}
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: NAVY, fontFamily: "'Poppins', sans-serif", marginBottom: '1rem' }}>
-                Competency Analysis
+          {/* Competency breakdown */}
+          <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: '1.75rem' }}>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: NAVY, fontFamily: "'Poppins', sans-serif", marginBottom: '1rem' }}>
+              Competency Analysis & Gap Severity
+            </div>
+            {comps.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                <Target size={32} style={{ marginBottom: '0.5rem' }} />
+                <div style={{ fontSize: '0.875rem' }}>No competency data yet. Upload your profile above.</div>
               </div>
-              {comps.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                  <Target size={32} style={{ marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.875rem' }}>No competency data yet. Upload your profile above.</div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    {visible.map(comp => {
-                      const current = comp.current_level ?? 0;
-                      const required = comp.required_level ?? 5;
-                      const pct = Math.round((current / 5) * 100);
-                      const color = comp.gap_severity === 'critical' ? '#dc2626' : comp.gap_severity === 'moderate' ? '#d97706' : '#16a34a';
-                      return (
-                        <div key={comp.code} style={{ padding: '0.6rem 0.875rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #f3f4f6' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: NAVY }}>{comp.competency_name}</span>
-                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color, background: color + '15', padding: '0.1rem 0.45rem', borderRadius: '8px' }}>
-                              {comp.gap_severity === 'proficient' ? '✓ OK' : `Gap ${(required - current).toFixed(1)}`}
-                            </span>
-                          </div>
-                          <div style={{ height: '5px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.6s ease' }} />
-                          </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                  {visible.map(comp => {
+                    const current = comp.current_level ?? 0;
+                    const required = comp.required_level ?? 5;
+                    const pct = Math.round((current / 5) * 100);
+                    const color = comp.gap_severity === 'critical' ? '#dc2626' : comp.gap_severity === 'moderate' ? '#d97706' : '#16a34a';
+                    return (
+                      <div key={comp.code} style={{ padding: '0.75rem 0.9rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #f3f4f6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: NAVY }}>{comp.competency_name}</span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color, background: color + '15', padding: '0.1rem 0.45rem', borderRadius: '8px' }}>
+                            {comp.gap_severity === 'proficient' ? '✓ OK' : `Gap ${(required - current).toFixed(1)}`}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                  {comps.length > 6 && (
-                    <button onClick={() => setExpanded(!expanded)} style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: NAVY, fontWeight: 600, fontSize: '0.82rem', background: 'none', border: 'none', cursor: 'pointer' }}>
-                      {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      {expanded ? 'Show less' : `Show ${comps.length - 6} more`}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+                        <div style={{ height: '5px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.6s ease' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {comps.length > 6 && (
+                  <button onClick={() => setExpanded(!expanded)} style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: NAVY, fontWeight: 600, fontSize: '0.82rem', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    {expanded ? 'Show less' : `Show ${comps.length - 6} more competencies`}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
 
-            {/* Recommendations */}
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ fontWeight: 800, fontSize: '1rem', color: NAVY, fontFamily: "'Poppins', sans-serif" }}>
-                  Recommended Courses
-                </div>
-                <button onClick={() => navigate('/dashboard/courses')} style={{ fontSize: '0.78rem', fontWeight: 700, color: ORANGE, background: 'none', border: 'none', cursor: 'pointer' }}>
-                  See all →
-                </button>
-              </div>
-              {recsData?.recommendations?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {recsData.recommendations.slice(0, 5).map(rec => (
-                    <CourseChip key={rec.course_id} rec={rec} />
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                  <BookOpen size={32} style={{ marginBottom: '0.5rem' }} />
-                  <div style={{ fontSize: '0.875rem' }}>No recommendations yet. Upload your profile above.</div>
-                </div>
-              )}
-            </div>
+          {/* Sequential Learning Path Roadmap */}
+          <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+            <LearningPathRoadmap
+              recommendations={recsData?.recommendations || []}
+              roleCode={user?.role_code || gapData?.role_code || 'SSO'}
+              onStartAssessment={(c) => navigate('/dashboard/assessment')}
+            />
           </div>
         </>
       )}

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
   Upload, RefreshCw, BookOpen, AlertTriangle, CheckCircle,
   TrendingDown, ChevronDown, ChevronUp, Target,
-  Award, Loader, Info, Star, Clock
+  Award, Loader, Info, Star, Clock, MapPin, Compass
 } from 'lucide-react';
+import LearningPathRoadmap from '../components/LearningPathRoadmap';
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
@@ -239,48 +240,31 @@ export default function LearnerDashboard({ selectedOfficer, gapData, recsData, o
             </div>
           </div>
 
-          {/* ── Two-column: Competency breakdown + Recommendations ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-
-            {/* LEFT: Competency breakdown */}
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.1rem', color: NAVY, fontFamily: 'Poppins, sans-serif', marginBottom: '0.25rem' }}>
-                Competency Analysis
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '1.25rem' }}>
-                Your current skill levels vs. role requirements ({gapData?.role_code ?? selectedOfficer.role_code})
-              </div>
-              {gapData ? (
-                <CompetencyBreakdown gapData={gapData} />
-              ) : (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                  <Target style={{ width: '32px', height: '32px', margin: '0 auto 0.5rem' }} />
-                  <div style={{ fontSize: '0.875rem' }}>Upload your profile to see gap analysis</div>
-                </div>
-              )}
+          {/* ── Competency Analysis Breakdown ── */}
+          <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: '1.75rem' }}>
+            <div style={{ fontWeight: 800, fontSize: '1.1rem', color: NAVY, fontFamily: 'Poppins, sans-serif', marginBottom: '0.25rem' }}>
+              Competency Analysis & Target Benchmarks
             </div>
-
-            {/* RIGHT: Course recommendations */}
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontWeight: 800, fontSize: '1.1rem', color: NAVY, fontFamily: 'Poppins, sans-serif', marginBottom: '0.25rem' }}>
-                Recommended Courses
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '1.25rem' }}>
-                Personalised from iGOT Karmayogi & NSSTA Training Calendar
-              </div>
-              {recsData?.recommendations?.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '620px', overflowY: 'auto', paddingRight: '2px' }}>
-                  {recsData.recommendations.map(rec => (
-                    <CourseCard key={rec.course_id} rec={rec} />
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                  <BookOpen style={{ width: '32px', height: '32px', margin: '0 auto 0.5rem' }} />
-                  <div style={{ fontSize: '0.875rem' }}>No recommendations yet. Upload your profile first.</div>
-                </div>
-              )}
+            <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '1.25rem' }}>
+              Your current assessed levels vs. official MoSPI NKM role requirements ({gapData?.role_code ?? selectedOfficer.role_code})
             </div>
+            {gapData ? (
+              <CompetencyBreakdown gapData={gapData} />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                <Target style={{ width: '32px', height: '32px', margin: '0 auto 0.5rem' }} />
+                <div style={{ fontSize: '0.875rem' }}>Upload your profile to see gap analysis</div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Full Interactive Learning Path Roadmap Section ── */}
+          <div style={{ background: 'white', borderRadius: '16px', padding: '1.75rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+            <LearningPathRoadmap
+              recommendations={recsData?.recommendations || []}
+              roleCode={gapData?.role_code ?? selectedOfficer.role_code}
+              onStartAssessment={onGoAssessment}
+            />
           </div>
         </>
       )}

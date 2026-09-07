@@ -61,6 +61,52 @@ OUTPUT FORMAT (return ONLY this JSON, no explanation, no markdown):
 }"""
 
 
+def safe_float(val, default: float = 0.0) -> float:
+    """Safely convert strings like '2 Years', '50%', '3/5', None into float."""
+    if val is None:
+        return default
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        match = re.search(r"[-+]?\d*\.?\d+", val)
+        if match:
+            try:
+                return float(match.group())
+            except ValueError:
+                return default
+    return default
+
+
+def parse_llm_json(raw_text: str) -> dict:
+    """Robustly parse LLM JSON response even if markdown or minor syntax errors exist."""
+    if not raw_text:
+        return {}
+
+    cleaned = raw_text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", cleaned)
+        cleaned = re.sub(r"\n?```$", "", cleaned)
+        cleaned = cleaned.strip()
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Try matching first { to last }
+    match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+    if match:
+        candidate = match.group(1)
+        # Fix trailing commas before } or ]
+        candidate_clean = re.sub(r",\s*([\}\]])", r"\1", candidate)
+        try:
+            return json.loads(candidate_clean)
+        except json.JSONDecodeError:
+            pass
+
+    return {}
+
+
 # ─── Main extractor ───────────────────────────────────────────────────────────
 
 def extract_profile(
@@ -91,81 +137,78 @@ def extract_profile(
             ],
             temperature=0.0,    # deterministic output — we need consistent JSON
             max_tokens=2048,
-            response_format={"type": "json_object"},  # force JSON mode
         )
     except Exception as e:
         raise RuntimeError(f"LLM call failed: {e}") from e
 
     raw_json = response.choices[0].message.content or "{}"
-
-    try:
-        data = json.loads(raw_json)
-    except json.JSONDecodeError as e:
-        # Try to extract JSON from the response if the model added markdown
-        match = re.search(r"\{.*\}", raw_json, re.DOTALL)
-        if match:
-            data = json.loads(match.group())
-        else:
-            raise ValueError(f"LLM returned invalid JSON: {e}\nRaw: {raw_json[:500]}")
+    data = parse_llm_json(raw_json)
 
     return _build_profile(officer_id, role_code, data)
 
 
 def _build_profile(officer_id: str, role_code: str, data: dict) -> OfficerProfile:
     """Convert raw LLM JSON dict into a typed OfficerProfile."""
+    if not isinstance(data, dict):
+        data = {}
 
-    assessments = [
-        AssessmentEvidence(
-            competency_code=item["competency_code"],
-            test_percent=float(item.get("test_percent", 0)),
-            source_reference=item.get("source_reference"),
-        )
-        for item in data.get("assessments", [])
-        if item.get("competency_code") and item.get("test_percent") is not None
-    ]
+    assessments = []
+    for item in data.get("assessments", []):
+        if isinstance(item, dict) and item.get("competency_code"):
+            assessments.append(
+                AssessmentEvidence(
+                    competency_code=str(item["competency_code"]).strip().upper(),
+                    test_percent=safe_float(item.get("test_percent"), 0.0),
+                    source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
+                )
+            )
 
-    experiences = [
-        ExperienceEvidence(
-            competency_code=item["competency_code"],
-            years=float(item.get("years", 0)),
-            relevance=str(item.get("relevance", "unrelated")).lower(),
-            source_reference=item.get("source_reference"),
-        )
-        for item in data.get("experiences", [])
-        if item.get("competency_code")
-    ]
+    experiences = []
+    for item in data.get("experiences", []):
+        if isinstance(item, dict) and item.get("competency_code"):
+            experiences.append(
+                ExperienceEvidence(
+                    competency_code=str(item["competency_code"]).strip().upper(),
+                    years=safe_float(item.get("years"), 1.0),
+                    relevance=str(item.get("relevance", "direct")).lower().strip(),
+                    source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
+                )
+            )
 
-    trainings = [
-        TrainingEvidence(
-            competency_code=item["competency_code"],
-            course_level=str(item.get("course_level", "none")).lower(),
-            passed_assessment=bool(item.get("passed_assessment", False)),
-            course_title=item.get("course_title"),
-            source_reference=item.get("source_reference"),
-        )
-        for item in data.get("trainings", [])
-        if item.get("competency_code")
-    ]
+    trainings = []
+    for item in data.get("trainings", []):
+        if isinstance(item, dict) and item.get("competency_code"):
+            trainings.append(
+                TrainingEvidence(
+                    competency_code=str(item["competency_code"]).strip().upper(),
+                    course_level=str(item.get("course_level", "beginner")).lower().strip(),
+                    passed_assessment=bool(item.get("passed_assessment", False)),
+                    course_title=str(item.get("course_title", "")) if item.get("course_title") else None,
+                    source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
+                )
+            )
 
-    education = [
-        EducationEvidence(
-            competency_code=item["competency_code"],
-            education_score=float(item.get("education_score", 1)),
-            degree=item.get("degree"),
-            field=item.get("field"),
-        )
-        for item in data.get("education", [])
-        if item.get("competency_code")
-    ]
+    education = []
+    for item in data.get("education", []):
+        if isinstance(item, dict) and item.get("competency_code"):
+            education.append(
+                EducationEvidence(
+                    competency_code=str(item["competency_code"]).strip().upper(),
+                    education_score=safe_float(item.get("education_score"), 4.0),
+                    degree=str(item.get("degree", "")) if item.get("degree") else None,
+                    field=str(item.get("field", "")) if item.get("field") else None,
+                )
+            )
 
-    self_reports = [
-        SelfReportEvidence(
-            competency_code=item["competency_code"],
-            self_score=float(item.get("self_score", 1)),
-        )
-        for item in data.get("self_reports", [])
-        if item.get("competency_code")
-    ]
+    self_reports = []
+    for item in data.get("self_reports", []):
+        if isinstance(item, dict) and item.get("competency_code"):
+            self_reports.append(
+                SelfReportEvidence(
+                    competency_code=str(item["competency_code"]).strip().upper(),
+                    self_score=safe_float(item.get("self_score"), 3.0),
+                )
+            )
 
     return OfficerProfile(
         officer_id=officer_id,

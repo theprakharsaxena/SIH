@@ -1,8 +1,9 @@
 import React from 'react';
 import { Grid, Layers } from 'lucide-react';
 
-export default function WorkforceHeatmap({ heatmapData }) {
-  if (!heatmapData || !heatmapData.competency_matrix) {
+export default function WorkforceHeatmap({ heatmapData, data }) {
+  const actualData = heatmapData || data;
+  if (!actualData || !actualData.competency_matrix) {
     return (
       <div className="glass-card" style={{ textAlign: 'center', padding: '2rem' }}>
         <p style={{ color: 'var(--text-muted)' }}>Loading workforce heatmap...</p>
@@ -10,8 +11,8 @@ export default function WorkforceHeatmap({ heatmapData }) {
     );
   }
 
-  const roles = heatmapData.roles || [];
-  const matrix = heatmapData.competency_matrix || [];
+  const roles = actualData.roles || [];
+  const matrix = actualData.competency_matrix || [];
 
   const getColorForScore = (score) => {
     if (score >= 4.0) return 'rgba(16, 185, 129, 0.25)'; // High - emerald

@@ -175,7 +175,6 @@ Remember: ONLY use information from the above source text."""
             ],
             temperature=0.3,    # slight randomness for question variety
             max_tokens=2048,
-            response_format={"type": "json_object"},
         )
     except Exception as e:
         raise RuntimeError(f"LLM call failed during MCQ generation: {e}") from e

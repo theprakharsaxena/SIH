@@ -34,7 +34,7 @@ export default function HeatmapPage() {
             <div>Loading heatmap…</div>
           </div>
         ) : (
-          <WorkforceHeatmap data={data} />
+          <WorkforceHeatmap heatmapData={data} data={data} />
         )}
       </div>
 

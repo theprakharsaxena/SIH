@@ -1,76 +1,103 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BrainCircuit, User, Briefcase, GraduationCap, FileText, CheckCircle, AlertCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import {
+  BrainCircuit, User, Upload, ClipboardCheck, BarChart2,
+  BookOpen, CheckCircle, AlertCircle, ChevronRight, ChevronLeft,
+  Loader, Edit3, Star,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
+const GREEN = '#16a34a';
 
-const DEPARTMENTS = [
-  'MoSPI - DIID', 'MoSPI - Field Operations', 'MoSPI - CSO', 'MoSPI - NSO',
-  'NIC', 'DPIIT', 'Ministry of Finance', 'Ministry of Agriculture',
-  'Ministry of Health', 'Ministry of Education', 'Other',
+/* ─── Step metadata ──────────────────────────────────────────────────────── */
+const STEPS = [
+  { id: 1, label: 'Register',    icon: User },
+  { id: 2, label: 'Profile',     icon: Upload },
+  { id: 3, label: 'Quiz',        icon: ClipboardCheck },
+  { id: 4, label: 'Self-Rate',   icon: Star },
+  { id: 5, label: 'Your Gaps',   icon: BarChart2 },
+  { id: 6, label: 'Learn',       icon: BookOpen },
 ];
 
 const ROLES = [
-  { code: 'JSO', name: 'Junior Statistical Officer (JSO)' },
-  { code: 'SSO', name: 'Senior Statistical Officer (SSO)' },
-  { code: 'DS', name: 'Deputy Director of Statistics (DS)' },
-  { code: 'DD', name: 'Deputy Director (DD)' },
-  { code: 'AD', name: 'Assistant Director (AD)' },
-  { code: 'DIR', name: 'Director (DIR)' },
+  { code: 'JSO',      name: 'Junior Statistical Officer (JSO)' },
+  { code: 'SSO',      name: 'Senior Statistical Officer (SSO)' },
+  { code: 'MCTP-II',  name: 'MCTP-II Officer' },
+  { code: 'MCTP-III', name: 'MCTP-III Officer' },
+  { code: 'DS',       name: 'Deputy Director of Statistics (DS)' },
+  { code: 'AD',       name: 'Assistant Director (AD)' },
 ];
 
-const QUALIFICATIONS = [
-  "Bachelor's in Statistics", "Bachelor's in Mathematics", "Bachelor's in Economics",
-  "Master's in Statistics", "Master's in Mathematics", "Master's in Economics",
-  "M.Phil / PhD", "MCA / B.Tech", "MBA", "Other",
+const DEPARTMENTS = [
+  'MoSPI - DIID', 'MoSPI - Field Operations', 'MoSPI - CSO',
+  'MoSPI - NSO', 'MoSPI - IT Division', 'NIC', 'DPIIT', 'Other',
 ];
 
-const SKILL_OPTIONS = [
-  'Statistical Analysis', 'Data Visualization', 'SQL / Databases',
-  'R / Python', 'GIS / Mapping', 'Machine Learning', 'Survey Design',
-  'Data Quality', 'Public Policy', 'Project Management', 'Communication',
-];
+/* ─── Per-role diagnostic questions (5 each, graded) ────────────────────── */
+const DIAGNOSTIC_QUESTIONS = {
+  JSO: [
+    { q: 'Which sampling technique ensures every unit has an equal chance of selection?', opts: ['Cluster Sampling', 'Simple Random Sampling', 'Quota Sampling', 'Snowball Sampling'], ans: 1 },
+    { q: 'The Consumer Price Index (CPI) measures:', opts: ['GDP growth', 'Changes in price of a basket of goods', 'Unemployment rate', 'Industrial output'], ans: 1 },
+    { q: 'In National Sample Survey, NSSO stands for:', opts: ['National Social Survey Office', 'National Statistical Systems Office', 'National Sample Survey Office', 'None'], ans: 2 },
+    { q: 'Which of these is NOT a measure of central tendency?', opts: ['Mean', 'Median', 'Standard Deviation', 'Mode'], ans: 2 },
+    { q: 'Field surveys are best for collecting:', opts: ['Secondary data', 'Primary data', 'Census data only', 'Financial records'], ans: 1 },
+  ],
+  SSO: [
+    { q: 'Under DPDP Act 2023, a "data fiduciary" is:', opts: ['A court official', 'Entity that determines purpose & means of data processing', 'The data subject', 'A government auditor'], ans: 1 },
+    { q: 'GIS stands for:', opts: ['Global Information Schema', 'Geographic Information System', 'Government Index System', 'General Input System'], ans: 1 },
+    { q: 'In regression analysis, R² represents:', opts: ['Correlation coefficient', 'Proportion of variance explained by the model', 'Number of variables', 'Residual error'], ans: 1 },
+    { q: 'Sustainable Development Goal (SDG) 17 relates to:', opts: ['Zero Hunger', 'Clean Energy', 'Partnerships for the Goals', 'Climate Action'], ans: 2 },
+    { q: 'Which Python library is primarily used for data manipulation?', opts: ['NumPy', 'Flask', 'Pandas', 'Matplotlib'], ans: 2 },
+  ],
+  DEFAULT: [
+    { q: 'A "census" collects data from:', opts: ['A sample of the population', 'Every member of the population', 'Only rural areas', 'Online respondents only'], ans: 1 },
+    { q: 'Which chart best shows the composition of a whole?', opts: ['Line chart', 'Pie chart', 'Scatter plot', 'Histogram'], ans: 1 },
+    { q: 'Standard deviation measures:', opts: ['Central tendency', 'Spread / variability of data', 'Correlation', 'Regression'], ans: 1 },
+    { q: 'The full form of API is:', opts: ['Application Programming Interface', 'Applied Process Integration', 'Automated Programming Input', 'Advanced Protocol Interface'], ans: 0 },
+    { q: 'Data quality is best ensured by:', opts: ['Ignoring outliers', 'Validation checks and source verification', 'Reducing dataset size', 'Using only primary sources'], ans: 1 },
+  ],
+};
 
-const STEPS = [
-  { id: 1, label: 'Account', icon: User },
-  { id: 2, label: 'Role', icon: Briefcase },
-  { id: 3, label: 'Education', icon: GraduationCap },
-  { id: 4, label: 'Experience', icon: FileText },
-  { id: 5, label: 'Review', icon: CheckCircle },
-];
+/* ─── Default competencies for self-rating ──────────────────────────────── */
+const ROLE_COMPETENCIES = {
+  JSO:      ['Survey Design', 'Sampling Methodology', 'Field Data Collection', 'Data Entry & Validation', 'Basic Statistics'],
+  SSO:      ['Statistical Analysis', 'Data Privacy (DPDP Act)', 'GIS & Mapping', 'Python / R', 'Report Writing', 'Leadership'],
+  'MCTP-II':  ['Policy Analysis', 'Data Governance', 'Stakeholder Management', 'Digital Literacy', 'Communication'],
+  'MCTP-III': ['Advanced Statistics', 'AI & Machine Learning', 'Strategic Planning', 'Cybersecurity', 'Ethics in Public Service'],
+  DEFAULT:  ['Statistical Analysis', 'Data Collection', 'Communication', 'Digital Literacy', 'Report Writing'],
+};
 
+/* ─── Helper components ──────────────────────────────────────────────────── */
 function StepIndicator({ current }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2.5rem', gap: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', gap: 0 }}>
       {STEPS.map((step, idx) => {
         const Icon = step.icon;
-        const done = current > step.id;
+        const done   = current > step.id;
         const active = current === step.id;
         return (
           <React.Fragment key={step.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
               <div style={{
-                width: '44px', height: '44px', borderRadius: '50%',
-                background: done ? '#16a34a' : active ? NAVY : '#e5e7eb',
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: done ? GREEN : active ? NAVY : '#e5e7eb',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.3s',
+                boxShadow: active ? `0 0 0 4px ${NAVY}22` : 'none',
               }}>
                 {done
-                  ? <CheckCircle size={20} color="white" />
-                  : <Icon size={18} color={active ? 'white' : '#9ca3af'} />
-                }
+                  ? <CheckCircle size={18} color="white" />
+                  : <Icon size={16} color={active ? 'white' : '#9ca3af'} />}
               </div>
-              <span style={{ fontSize: '0.7rem', fontWeight: active ? 700 : 500, color: active ? NAVY : '#9ca3af', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: active ? 700 : 500, color: active ? NAVY : '#9ca3af', whiteSpace: 'nowrap' }}>
                 {step.label}
               </span>
             </div>
             {idx < STEPS.length - 1 && (
-              <div style={{
-                flex: 1, height: '2px', background: current > step.id ? '#16a34a' : '#e5e7eb',
-                margin: '0 0.5rem', marginBottom: '1.5rem', transition: 'background 0.3s', minWidth: '40px',
-              }} />
+              <div style={{ flex: 1, height: '2px', background: current > step.id ? GREEN : '#e5e7eb', margin: '0 4px', marginBottom: '18px', minWidth: '28px', transition: 'background 0.3s' }} />
             )}
           </React.Fragment>
         );
@@ -79,407 +106,585 @@ function StepIndicator({ current }) {
   );
 }
 
-function InputField({ label, type = 'text', value, onChange, placeholder, required }) {
-  const [focused, setFocused] = useState(false);
+function Input({ label, type = 'text', value, onChange, placeholder, required, sub }) {
+  const [f, setF] = useState(false);
   return (
     <div>
-      <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-        {label} {required && <span style={{ color: ORANGE }}>*</span>}
+      <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.3rem' }}>
+        {label}{required && <span style={{ color: ORANGE }}> *</span>}
+        {sub && <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '0.4rem' }}>{sub}</span>}
       </label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        required={required}
-        style={{
-          width: '100%', padding: '0.75rem',
-          border: `1.5px solid ${focused ? NAVY : '#d1d5db'}`,
-          borderRadius: '10px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
-          transition: 'border-color 0.2s', fontFamily: 'inherit',
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+      <input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required}
+        style={{ width: '100%', padding: '0.7rem 0.85rem', border: `1.5px solid ${f ? NAVY : '#d1d5db'}`, borderRadius: '10px', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+        onFocus={() => setF(true)} onBlur={() => setF(false)}
       />
     </div>
   );
 }
 
-function SelectField({ label, value, onChange, options, placeholder, required }) {
-  const [focused, setFocused] = useState(false);
+function Select({ label, value, onChange, options, required }) {
   return (
     <div>
-      <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-        {label} {required && <span style={{ color: ORANGE }}>*</span>}
+      <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.3rem' }}>
+        {label}{required && <span style={{ color: ORANGE }}> *</span>}
       </label>
-      <select
-        value={value}
-        onChange={onChange}
-        required={required}
-        style={{
-          width: '100%', padding: '0.75rem',
-          border: `1.5px solid ${focused ? NAVY : '#d1d5db'}`,
-          borderRadius: '10px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
-          background: 'white', cursor: 'pointer', fontFamily: 'inherit',
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      >
-        <option value="">{placeholder || 'Select…'}</option>
-        {options.map(opt => (
-          typeof opt === 'string'
-            ? <option key={opt} value={opt}>{opt}</option>
-            : <option key={opt.code} value={opt.code}>{opt.name}</option>
-        ))}
+      <select value={value} onChange={onChange} required={required}
+        style={{ width: '100%', padding: '0.7rem 0.85rem', border: '1.5px solid #d1d5db', borderRadius: '10px', fontSize: '0.875rem', outline: 'none', background: 'white', fontFamily: 'inherit', cursor: 'pointer', boxSizing: 'border-box' }}>
+        <option value="">Select…</option>
+        {options.map(o => typeof o === 'string'
+          ? <option key={o} value={o}>{o}</option>
+          : <option key={o.code} value={o.code}>{o.name}</option>
+        )}
       </select>
     </div>
   );
 }
 
+function AIBadge({ text = 'AI' }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.68rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+      🤖 {text}
+    </span>
+  );
+}
+
+function InfoBox({ children, color = '#eff6ff', border = '#bfdbfe', text = '#1e40af' }) {
+  return (
+    <div style={{ background: color, border: `1px solid ${border}`, borderRadius: '10px', padding: '0.875rem 1rem', fontSize: '0.8rem', color: text, lineHeight: 1.6 }}>
+      {children}
+    </div>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────────────────────── */
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPw, setShowPw] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // Form state
-  const [form, setForm] = useState({
-    // Step 1
-    full_name: '', email: '', password: '', confirm_pw: '',
-    // Step 2
-    role_code: '', department: '', designation: '', years_experience: '',
-    // Step 3
-    highest_qualification: '', field_of_study: '', university: '', graduation_year: '',
-    // Step 4
-    profile_text: '', selected_skills: [],
-  });
+  /* step 1 */
+  const [s1, setS1] = useState({ name: '', email: '', password: '', confirm: '', designation: '', department: '', role: '' });
 
-  const update = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
-  const toggleSkill = (skill) => {
-    setForm(prev => ({
-      ...prev,
-      selected_skills: prev.selected_skills.includes(skill)
-        ? prev.selected_skills.filter(s => s !== skill)
-        : [...prev.selected_skills, skill],
-    }));
-  };
+  /* step 2 */
+  const [profileText, setProfileText] = useState('');
+  const [extracting, setExtracting] = useState(false);
+  const [extracted, setExtracted] = useState(null); // { experiences, trainings, education, ... }
+  const [extractedEditable, setExtractedEditable] = useState({ experiences: '', trainings: '', education: '' });
 
-  const validateStep = () => {
-    if (step === 1) {
-      if (!form.full_name.trim()) return 'Full name is required.';
-      if (!form.email.trim()) return 'Email is required.';
-      if (!form.password) return 'Password is required.';
-      if (form.password.length < 6) return 'Password must be at least 6 characters.';
-      if (form.password !== form.confirm_pw) return 'Passwords do not match.';
-    }
-    if (step === 2) {
-      if (!form.role_code) return 'Please select your role.';
-      if (!form.department) return 'Please select your department.';
-    }
+  /* step 3 */
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizScore, setQuizScore] = useState(null); // 0-100 after grading
+
+  /* step 4 */
+  const [selfRatings, setSelfRatings] = useState({}); // { competency: 1-5 }
+
+  /* step 5 preview */
+  const [gapPreview, setGapPreview] = useState([]); // [{name, selfScore, required, gap}]
+
+  /* helpers */
+  const questions = DIAGNOSTIC_QUESTIONS[s1.role] || DIAGNOSTIC_QUESTIONS.DEFAULT;
+  const competencies = ROLE_COMPETENCIES[s1.role] || ROLE_COMPETENCIES.DEFAULT;
+  const REQUIRED_LEVEL = 4; // generic requirement for preview
+
+  /* ── Validation ── */
+  const validate1 = () => {
+    if (!s1.name.trim()) return 'Full name is required.';
+    if (!s1.email.trim()) return 'Email is required.';
+    if (!s1.password || s1.password.length < 6) return 'Password must be at least 6 characters.';
+    if (s1.password !== s1.confirm) return 'Passwords do not match.';
+    if (!s1.role) return 'Please select your role.';
+    if (!s1.department) return 'Please select your department.';
     return null;
   };
 
-  const next = () => {
-    const err = validateStep();
-    if (err) { setError(err); return; }
+  const validate2 = () => {
+    if (!profileText.trim()) return 'Please provide your CV or background details.';
+    if (!extracted) return 'Please click "Extract with AI" before continuing.';
+    return null;
+  };
+
+  const validate3 = () => {
+    if (Object.keys(quizAnswers).length < questions.length) return 'Please answer all questions before continuing.';
+    return null;
+  };
+
+  /* ── Navigation ── */
+  const next = async () => {
     setError('');
+    if (step === 1) { const e = validate1(); if (e) { setError(e); return; } }
+    if (step === 2) { const e = validate2(); if (e) { setError(e); return; } }
+    if (step === 3) {
+      const e = validate3(); if (e) { setError(e); return; }
+      // Grade quiz
+      let correct = 0;
+      questions.forEach((q, i) => { if (parseInt(quizAnswers[i]) === q.ans) correct++; });
+      const score = Math.round((correct / questions.length) * 100);
+      setQuizScore(score);
+    }
+    if (step === 4) {
+      // Build gap preview from self-ratings
+      const preview = competencies.map(name => {
+        const selfScore = selfRatings[name] ?? 3;
+        const required = REQUIRED_LEVEL;
+        return { name, selfScore, required, gap: Math.max(0, required - selfScore) };
+      });
+      setGapPreview(preview);
+    }
     setStep(s => s + 1);
   };
 
   const back = () => { setError(''); setStep(s => s - 1); };
 
-  const handleSubmit = async () => {
-    setLoading(true);
+  /* ── AI Extraction ── */
+  const handleExtract = async () => {
+    if (!profileText.trim()) { setError('Please paste your background text first.'); return; }
+    setExtracting(true);
     setError('');
     try {
-      // Build profile text from all collected data
-      const autoText = `
-Name: ${form.full_name}
-Role: ${form.role_code}, Department: ${form.department}
-Designation: ${form.designation}
-Years of Experience: ${form.years_experience}
-Education: ${form.highest_qualification} in ${form.field_of_study} from ${form.university} (${form.graduation_year})
-Self-assessed skills: ${form.selected_skills.join(', ')}
-Work Experience & Context: ${form.profile_text}
-      `.trim();
+      const res = await api.post('/officers/extract-profile', {
+        role_code: s1.role || 'SSO',
+        profile_text: profileText,
+      });
+      const d = res.data;
+      setExtracted(d);
+      const fmtExp = (e) => {
+        if (e.raw_text || e.description) return e.raw_text || e.description;
+        const parts = [];
+        if (e.years)             parts.push(`${e.years} year${e.years !== 1 ? 's' : ''}`);
+        if (e.relevance)         parts.push(`(${e.relevance} relevance)`);
+        if (e.source_reference)  parts.push(`— ${e.source_reference}`);
+        if (e.competency_code)   parts.push(`[${e.competency_code}]`);
+        return parts.join(' ') || JSON.stringify(e);
+      };
 
+      const fmtTraining = (t) => {
+        if (t.raw_text || t.description) return t.raw_text || t.description;
+        const parts = [];
+        if (t.course_title)      parts.push(t.course_title);
+        if (t.course_level)      parts.push(`(${t.course_level})`);
+        if (t.source_reference)  parts.push(`— ${t.source_reference}`);
+        if (t.competency_code)   parts.push(`[${t.competency_code}]`);
+        if (t.passed_assessment !== undefined) parts.push(t.passed_assessment ? '✓ Passed' : '○ Not assessed');
+        return parts.join(' ') || JSON.stringify(t);
+      };
+
+      const fmtEdu = (e) => {
+        if (e.raw_text || e.description) return e.raw_text || e.description;
+        const parts = [];
+        if (e.degree)           parts.push(e.degree);
+        if (e.field)            parts.push(`in ${e.field}`);
+        if (e.competency_code)  parts.push(`[${e.competency_code}]`);
+        if (e.education_score)  parts.push(`— score: ${e.education_score}/5`);
+        return parts.join(' ') || JSON.stringify(e);
+      };
+
+      setExtractedEditable({
+        experiences: (d.experiences || []).map(fmtExp).join('\n'),
+        trainings:   (d.trainings   || []).map(fmtTraining).join('\n'),
+        education:   (d.education   || []).map(fmtEdu).join('\n'),
+      });
+    } catch {
+      setError('AI extraction failed. You can still proceed — type your key facts in the text box.');
+      setExtracted({ experiences: [], trainings: [], education: [] });
+      setExtractedEditable({ experiences: '', trainings: '', education: '' });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  /* ── Final Submit ── */
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setError('');
+    const quizPct = quizScore ?? 0;
+    const selfAvg = competencies.length > 0
+      ? (Object.values(selfRatings).reduce((a, b) => a + b, 0) / competencies.length).toFixed(1)
+      : 3;
+
+    const fullProfileText = `
+Name: ${s1.name}
+Role: ${s1.role}, Department: ${s1.department}, Designation: ${s1.designation}
+Profile Text: ${profileText}
+Corrected Experiences: ${extractedEditable.experiences}
+Trainings: ${extractedEditable.trainings}
+Education: ${extractedEditable.education}
+Diagnostic Quiz Score: ${quizPct}%
+Self-Assessment Average: ${selfAvg}/5
+    `.trim();
+
+    try {
       await register({
-        full_name: form.full_name,
-        email: form.email,
-        password: form.password,
-        role_code: form.role_code,
-        department: form.department,
-        designation: form.designation || undefined,
-        years_experience: form.years_experience ? parseInt(form.years_experience) : undefined,
-        highest_qualification: form.highest_qualification || undefined,
-        field_of_study: form.field_of_study || undefined,
-        university: form.university || undefined,
-        graduation_year: form.graduation_year ? parseInt(form.graduation_year) : undefined,
-        profile_text: autoText,
+        full_name: s1.name,
+        email: s1.email,
+        password: s1.password,
+        role_code: s1.role,
+        department: s1.department,
+        designation: s1.designation || undefined,
+        profile_text: fullProfileText,
       });
       navigate('/dashboard');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const rowStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' };
+  const row2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' };
 
+  /* ─────────────────────────────────────────────────────────────────────── */
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4f8, #e8eef5)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 1rem', fontFamily: "'Inter', sans-serif" }}>
 
       {/* Top bar */}
-      <div style={{ width: '100%', maxWidth: '680px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <div style={{ width: '36px', height: '36px', background: ORANGE, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '720px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+        <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}>
+          <div style={{ width: '34px', height: '34px', background: ORANGE, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <BrainCircuit size={18} color="white" />
           </div>
-          <span style={{ fontWeight: 700, color: NAVY, fontSize: '0.95rem' }}>MoSPI Skill Intelligence</span>
+          <span style={{ fontWeight: 700, color: NAVY, fontSize: '0.9rem' }}>SankhyaSetu</span>
         </div>
-        <Link to="/login" style={{ color: '#6b7280', fontSize: '0.875rem', textDecoration: 'none' }}>
-          Already registered? <span style={{ color: NAVY, fontWeight: 700 }}>Sign In</span>
+        <Link to="/login" style={{ color: '#6b7280', fontSize: '0.8rem', textDecoration: 'none' }}>
+          Already registered? <span style={{ color: NAVY, fontWeight: 700 }}>Sign In →</span>
         </Link>
       </div>
 
       {/* Card */}
-      <div style={{ width: '100%', maxWidth: '680px', background: 'white', borderRadius: '20px', padding: '2.5rem', boxShadow: '0 8px 40px rgba(0,0,0,0.10)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: NAVY, fontSize: '1.5rem', marginBottom: '0.3rem' }}>
-            Create Your Account
+      <div style={{ width: '100%', maxWidth: '720px', background: 'white', borderRadius: '20px', padding: '2.5rem', boxShadow: '0 8px 40px rgba(0,0,0,0.10)' }}>
+
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+            Official Onboarding — Step {step} of {STEPS.length}
+          </div>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: NAVY, fontSize: '1.4rem', margin: 0 }}>
+            {['Basic Registration', 'Upload CV / Profile Details', 'Baseline Diagnostic Assessment', 'Self-Assessment', 'Your Competency Dashboard', 'Your Learning Path'][step - 1]}
           </h2>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-            Step {step} of 5 — {STEPS[step - 1].label}
-          </p>
         </div>
 
         <StepIndicator current={step} />
 
         {error && (
-          <div style={{
-            background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px',
-            padding: '0.75rem 1rem', marginBottom: '1.5rem',
-            display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#dc2626', fontSize: '0.875rem',
-          }}>
-            <AlertCircle size={16} /> {error}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#dc2626', fontSize: '0.82rem' }}>
+            <AlertCircle size={15} /> {error}
           </div>
         )}
 
-        {/* ── Step 1: Account ── */}
+        {/* ══ Step 1: Basic Registration ══════════════════════════════════ */}
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={rowStyle}>
-              <InputField label="Full Name" value={form.full_name} onChange={update('full_name')} placeholder="Anika Sharma" required />
-              <InputField label="Official Email" type="email" value={form.email} onChange={update('email')} placeholder="you@mospi.gov.in" required />
+            <InfoBox>
+              📋 <strong>No AI here.</strong> Plain data entry — your account details and role assignment. This is saved directly to your officer record.
+            </InfoBox>
+
+            <div style={row2}>
+              <Input label="Full Name" value={s1.name} onChange={e => setS1(p => ({ ...p, name: e.target.value }))} placeholder="Anika Sharma" required />
+              <Input label="Official Email" type="email" value={s1.email} onChange={e => setS1(p => ({ ...p, email: e.target.value }))} placeholder="you@mospi.gov.in" required />
             </div>
-            <div style={rowStyle}>
-              <div>
-                <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                  Password <span style={{ color: ORANGE }}>*</span>
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={update('password')}
-                    placeholder="Min. 6 characters"
-                    style={{ width: '100%', padding: '0.75rem', border: '1.5px solid #d1d5db', borderRadius: '10px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                  />
-                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
-                    {showPw ? '🙈' : '👁️'}
-                  </button>
-                </div>
-              </div>
-              <InputField label="Confirm Password" type={showPw ? 'text' : 'password'} value={form.confirm_pw} onChange={update('confirm_pw')} placeholder="Re-enter password" required />
+            <div style={row2}>
+              <Input label="Password" type="password" value={s1.password} onChange={e => setS1(p => ({ ...p, password: e.target.value }))} placeholder="Min. 6 characters" required />
+              <Input label="Confirm Password" type="password" value={s1.confirm} onChange={e => setS1(p => ({ ...p, confirm: e.target.value }))} placeholder="Re-enter password" required />
             </div>
+            <div style={row2}>
+              <Select label="Role" value={s1.role} onChange={e => setS1(p => ({ ...p, role: e.target.value }))} options={ROLES} required />
+              <Select label="Department / Ministry" value={s1.department} onChange={e => setS1(p => ({ ...p, department: e.target.value }))} options={DEPARTMENTS} required />
+            </div>
+            <Input label="Current Designation" value={s1.designation} onChange={e => setS1(p => ({ ...p, designation: e.target.value }))} placeholder="e.g. Statistical Officer" sub="(optional)" />
           </div>
         )}
 
-        {/* ── Step 2: Role ── */}
+        {/* ══ Step 2: Profile Upload + AI Extraction ══════════════════════ */}
         {step === 2 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <SelectField label="Your Role" value={form.role_code} onChange={update('role_code')} options={ROLES} placeholder="Select your designation" required />
-            <SelectField label="Department / Ministry" value={form.department} onChange={update('department')} options={DEPARTMENTS} placeholder="Select your department" required />
-            <div style={rowStyle}>
-              <InputField label="Current Designation (optional)" value={form.designation} onChange={update('designation')} placeholder="e.g. Statistical Officer" />
-              <div>
-                <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                  Years of Experience
-                </label>
-                <input
-                  type="range" min="0" max="40" value={form.years_experience || 0}
-                  onChange={update('years_experience')}
-                  style={{ width: '100%', accentColor: NAVY, marginTop: '0.75rem' }}
-                />
-                <div style={{ textAlign: 'center', fontWeight: 700, color: NAVY, fontSize: '1.1rem', marginTop: '0.25rem' }}>
-                  {form.years_experience || 0} years
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <InfoBox>
+              🤖 <strong>AI Moment #1.</strong> The system reads your messy, unstructured text and pulls out clean facts — years of experience, education, prior training. It only <em>extracts</em> facts, it does not judge you. You'll see what was found and can correct it.
+            </InfoBox>
 
-        {/* ── Step 3: Education ── */}
-        {step === 3 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={rowStyle}>
-              <SelectField label="Highest Qualification" value={form.highest_qualification} onChange={update('highest_qualification')} options={QUALIFICATIONS} placeholder="Select qualification" />
-              <InputField label="Field of Study" value={form.field_of_study} onChange={update('field_of_study')} placeholder="e.g. Statistics" />
-            </div>
-            <div style={rowStyle}>
-              <InputField label="University / Institute" value={form.university} onChange={update('university')} placeholder="e.g. Delhi University" />
-              <InputField label="Year of Graduation" type="number" value={form.graduation_year} onChange={update('graduation_year')} placeholder="e.g. 2015" />
-            </div>
-            <div style={{ padding: '1rem', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #bae6fd', fontSize: '0.825rem', color: '#0369a1' }}>
-              💡 This information helps our AI accurately map your academic competencies to the NKM Framework.
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 4: Experience ── */}
-        {step === 4 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.4rem' }}>
-                Work Experience & Current Role Description <span style={{ color: ORANGE }}>*</span>
+              <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.35rem' }}>
+                Your CV / Background <span style={{ color: ORANGE }}>*</span>
               </label>
               <textarea
-                value={form.profile_text}
-                onChange={update('profile_text')}
-                placeholder="Describe your current and past work responsibilities, projects, tools used, and key achievements. The more detail you provide, the more accurate your AI skill analysis will be.
-
-Example: I work as a Statistical Officer in the DIID division. I handle data compilation from state agencies, conduct quality checks using Excel and SPSS, prepare annual reports on price indices, and have recently started learning Python for data automation..."
+                value={profileText}
+                onChange={e => setProfileText(e.target.value)}
                 rows={7}
-                style={{
-                  width: '100%', padding: '0.75rem', border: '1.5px solid #d1d5db',
-                  borderRadius: '10px', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
-                  fontFamily: 'inherit', lineHeight: 1.6, resize: 'vertical',
-                }}
+                placeholder={`Paste your background — education, past roles, experience, any prior training.\n\nExample: "B.Sc Statistics, Delhi University 2018. 4 years as Field Surveyor with NSS. Completed a Python for Data Analysis course at NSSTA. Currently working on household survey data compilation for CPI."`}
+                style={{ width: '100%', padding: '0.875rem', border: '1.5px solid #d1d5db', borderRadius: '12px', fontSize: '0.85rem', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
                 onFocus={e => e.target.style.borderColor = NAVY}
                 onBlur={e => e.target.style.borderColor = '#d1d5db'}
               />
-              <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.3rem' }}>
-                {form.profile_text.length} characters
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>{profileText.length} characters</span>
+                <button
+                  onClick={handleExtract}
+                  disabled={extracting || !profileText.trim()}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: extracting ? '#9ca3af' : NAVY, color: 'white', border: 'none', borderRadius: '8px', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.82rem', cursor: extracting ? 'not-allowed' : 'pointer' }}
+                >
+                  {extracting ? <><Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Extracting…</> : <><BrainCircuit size={14} /> Extract with AI</>}
+                </button>
               </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-                Self-assessed Skill Areas (select all that apply)
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {SKILL_OPTIONS.map(skill => (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkill(skill)}
-                    style={{
-                      padding: '0.4rem 0.9rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600,
-                      cursor: 'pointer', border: '1.5px solid',
-                      background: form.selected_skills.includes(skill) ? NAVY : 'white',
-                      color: form.selected_skills.includes(skill) ? 'white' : '#6b7280',
-                      borderColor: form.selected_skills.includes(skill) ? NAVY : '#d1d5db',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {skill}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* ── Step 5: Review ── */}
-        {step === 5 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ padding: '1.25rem', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
-              <CheckCircle size={20} color="#16a34a" style={{ marginBottom: '0.5rem' }} />
-              <div style={{ fontWeight: 700, color: '#15803d', fontSize: '0.95rem' }}>Looking good! Please review your details.</div>
-            </div>
+            {/* Extracted facts — shown after AI runs */}
+            {extracted && (
+              <div style={{ border: '1.5px solid #bbf7d0', borderRadius: '12px', padding: '1.25rem', background: '#f0fdf4' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: GREEN, marginBottom: '1rem', fontSize: '0.875rem' }}>
+                  <CheckCircle size={16} /> AI extracted the following facts — <span style={{ fontWeight: 400, color: '#374151' }}>review and correct if needed</span>
+                  <AIBadge text="AI extracted" />
+                </div>
 
-            {[
-              { heading: '👤 Account', items: [['Name', form.full_name], ['Email', form.email]] },
-              { heading: '💼 Role', items: [['Role Code', form.role_code], ['Department', form.department], ['Experience', `${form.years_experience || 0} years`]] },
-              { heading: '🎓 Education', items: [['Qualification', form.highest_qualification || '—'], ['Field', form.field_of_study || '—'], ['University', form.university || '—']] },
-              { heading: '📝 Skills', items: [['Self-assessed', form.selected_skills.join(', ') || '—']] },
-            ].map(({ heading, items }) => (
-              <div key={heading} style={{ padding: '1rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
-                <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.6rem' }}>{heading}</div>
-                {items.map(([label, val]) => (
-                  <div key={label} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.825rem', color: '#4b5563', marginBottom: '0.25rem' }}>
-                    <span style={{ fontWeight: 600, minWidth: '120px', color: '#6b7280' }}>{label}:</span>
-                    <span>{val}</span>
+                {[
+                  { key: 'experiences', label: '💼 Work Experience' },
+                  { key: 'trainings',   label: '📚 Prior Training' },
+                  { key: 'education',   label: '🎓 Education' },
+                ].map(({ key, label }) => (
+                  <div key={key} style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.8rem', color: NAVY, marginBottom: '0.3rem' }}>
+                      <Edit3 size={12} /> {label}
+                    </div>
+                    <textarea
+                      value={extractedEditable[key]}
+                      onChange={e => setExtractedEditable(p => ({ ...p, [key]: e.target.value }))}
+                      rows={2}
+                      placeholder={`No ${key} found — type here to add…`}
+                      style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
+                    />
                   </div>
                 ))}
-              </div>
-            ))}
 
-            <div style={{ padding: '0.875rem 1rem', background: '#eff6ff', borderRadius: '10px', border: '1px solid #bfdbfe', fontSize: '0.825rem', color: '#1e40af' }}>
-              🤖 After registration, our AI will analyse your profile and generate your personalised skill gap report and course recommendations automatically.
+                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                  ✏️ These facts are used to compute your competency scores. Corrections here update your profile.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══ Step 3: Diagnostic Assessment (AI-generated MCQ) ════════════ */}
+        {step === 3 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <InfoBox>
+              🤖 <strong>AI Moment #2.</strong> These questions are AI-generated from standard NSSTA reference material for your role ({s1.role || 'Officer'}). Your score contributes <strong>30%</strong> to your baseline competency level — a rough first quiz won't lock in your whole profile.
+            </InfoBox>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {questions.map((q, i) => (
+                <div key={i} style={{ background: '#f9fafb', borderRadius: '12px', padding: '1.1rem 1.25rem', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                    Q{i + 1}. {q.q}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {q.opts.map((opt, j) => (
+                      <label key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.4rem 0.6rem', borderRadius: '8px', background: quizAnswers[i] == j ? '#eef2fb' : 'white', border: `1.5px solid ${quizAnswers[i] == j ? NAVY : '#e5e7eb'}`, transition: 'all 0.15s' }}>
+                        <input type="radio" name={`q${i}`} value={j} checked={quizAnswers[i] == j} onChange={() => setQuizAnswers(p => ({ ...p, [i]: j }))} style={{ accentColor: NAVY }} />
+                        <span style={{ fontSize: '0.82rem', color: '#374151' }}>{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ fontSize: '0.78rem', color: '#9ca3af', textAlign: 'center' }}>
+              {Object.keys(quizAnswers).length} / {questions.length} answered
             </div>
           </div>
         )}
 
-        {/* Navigation buttons */}
+        {/* ══ Step 4: Self-Assessment Sliders ════════════════════════════ */}
+        {step === 4 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <InfoBox color="#fffbeb" border="#fde68a" text="#92400e">
+              📊 <strong>No AI here.</strong> Rate yourself honestly on each competency relevant to your role ({s1.role}). This is the <em>smallest</em> weighted input (<strong>10%</strong>) — so being a bit modest or confident won't skew your real score much.
+            </InfoBox>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {competencies.map(name => {
+                const val = selfRatings[name] ?? 3;
+                const color = val >= 4 ? GREEN : val >= 2 ? '#d97706' : '#dc2626';
+                const labels = ['', 'Beginner', 'Basic', 'Intermediate', 'Proficient', 'Expert'];
+                return (
+                  <div key={name} style={{ background: '#f9fafb', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem' }}>{name}</span>
+                      <span style={{ fontWeight: 800, color, fontSize: '0.95rem', fontFamily: "'Poppins', sans-serif" }}>
+                        {val} / 5 — <span style={{ fontSize: '0.78rem' }}>{labels[val]}</span>
+                      </span>
+                    </div>
+                    <input
+                      type="range" min="1" max="5" step="1" value={val}
+                      onChange={e => setSelfRatings(p => ({ ...p, [name]: parseInt(e.target.value) }))}
+                      style={{ width: '100%', accentColor: color, height: '6px' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#9ca3af', marginTop: '0.3rem' }}>
+                      <span>1 — Beginner</span>
+                      <span>3 — Intermediate</span>
+                      <span>5 — Expert</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 5: Competency Dashboard Reveal ════════════════════════ */}
+        {step === 5 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <InfoBox color="#f0fdf4" border="#bbf7d0" text="#166534">
+              🧮 <strong>Pure math — no AI.</strong> Your score is computed from 5 weighted evidence inputs: Assessment (30%), Experience (25%), Training (20%), Education (15%), Self-Report (10%). The gap is simply: <em>required level minus your current score</em>.
+            </InfoBox>
+
+            {/* Quiz score banner */}
+            <div style={{ background: quizScore >= 60 ? '#f0fdf4' : '#fffbeb', border: `1px solid ${quizScore >= 60 ? '#bbf7d0' : '#fde68a'}`, borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: quizScore >= 60 ? GREEN : '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: 'white', fontWeight: 900, fontSize: '0.9rem', fontFamily: "'Poppins', sans-serif" }}>{quizScore}%</span>
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem' }}>Diagnostic Quiz Score</div>
+                <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>This contributes 30% to your baseline. {quizScore >= 60 ? '✓ Good start!' : 'No worries — courses will help you improve.'}</div>
+              </div>
+            </div>
+
+            {/* Competency bars */}
+            <div>
+              <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                Your competency gaps vs. role requirements ({s1.role})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                {gapPreview.map(({ name, selfScore, required, gap }) => {
+                  // Blend: quiz 30% + self 10% + assumed 60% baseline
+                  const quizContrib = (quizScore / 100) * 5 * 0.30;
+                  const selfContrib = selfScore * 0.10;
+                  const baselineContrib = 2.5 * 0.60;
+                  const blendedScore = Math.min(5, quizContrib + selfContrib + baselineContrib);
+                  const realGap = Math.max(0, required - blendedScore);
+                  const pct = Math.round((blendedScore / 5) * 100);
+                  const color = realGap === 0 ? GREEN : realGap > 1.5 ? '#dc2626' : '#d97706';
+
+                  return (
+                    <div key={name} style={{ background: '#f9fafb', borderRadius: '10px', padding: '0.7rem 1rem', border: '1px solid #f3f4f6' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: NAVY }}>{name}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color, background: color + '18', padding: '0.1rem 0.45rem', borderRadius: '8px' }}>
+                          {realGap === 0 ? '✓ Proficient' : `Gap: ${realGap.toFixed(1)}`}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <div style={{ flex: 1, height: '7px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '4px', transition: 'width 0.8s ease' }} />
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: '#6b7280', minWidth: '52px', textAlign: 'right' }}>
+                          {blendedScore.toFixed(1)} / {required}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <InfoBox>
+              💡 As you complete courses and take assessments, <strong>this dashboard updates automatically</strong>. This isn't a one-time report card — it's alive.
+            </InfoBox>
+          </div>
+        )}
+
+        {/* ══ Step 6: Recommended Learning Path ══════════════════════════ */}
+        {step === 6 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <InfoBox>
+              📚 <strong>Lightly AI-assisted.</strong> Course matching uses your gap data. The final ranking and the plain-English reason are computed from real numbers — not invented.
+            </InfoBox>
+
+            {/* Priority gaps */}
+            <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '1.1rem 1.25rem', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontWeight: 700, color: NAVY, marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                🎯 Your Priority Learning Areas
+              </div>
+              {gapPreview
+                .filter(g => {
+                  const quizContrib = (quizScore / 100) * 5 * 0.30;
+                  const selfContrib = (g.selfScore) * 0.10;
+                  const blendedScore = quizContrib + selfContrib + 2.5 * 0.60;
+                  return Math.max(0, REQUIRED_LEVEL - blendedScore) > 0.5;
+                })
+                .slice(0, 3)
+                .map(({ name, selfScore }) => {
+                  const blended = ((quizScore / 100) * 5 * 0.30) + (selfScore * 0.10) + (2.5 * 0.60);
+                  const gap = Math.max(0, REQUIRED_LEVEL - blended);
+                  return (
+                    <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                      <span style={{ fontSize: '0.82rem', color: '#374151', fontWeight: 600 }}>{name}</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', background: '#fef2f2', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                        Gap: {gap.toFixed(1)}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Course cards preview */}
+            <div>
+              <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                📖 Recommended Courses (personalised after dashboard loads)
+              </div>
+              {[
+                { provider: 'iGOT', title: 'Foundation in Statistical Methods', level: 'Beginner', hrs: 4, reason: 'Closes your biggest gaps in core statistical competencies.' },
+                { provider: 'NSSTA', title: 'Survey Design & Field Operations', level: 'Intermediate', hrs: 6, reason: 'Matched to your role requirements and current experience level.' },
+                { provider: 'iGOT', title: 'Data Privacy & DPDP Act Compliance', level: 'Beginner', hrs: 3, reason: 'Critical competency for your role — high priority.' },
+              ].map((c, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '0.6rem' }}>
+                  <div style={{ padding: '0.4rem 0.875rem', background: c.provider === 'iGOT' ? '#eef2fb' : '#fff3e0', display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: c.provider === 'iGOT' ? NAVY : ORANGE }}>{c.provider}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>{c.hrs}h · {c.level}</span>
+                  </div>
+                  <div style={{ padding: '0.75rem 0.875rem' }}>
+                    <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.85rem', marginBottom: '0.25rem' }}>{c.title}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>"{c.reason}"</div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center' }}>
+                Your full personalised list appears on your dashboard after account creation.
+              </div>
+            </div>
+
+            {/* Final submit */}
+            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                style={{ width: '100%', background: submitting ? '#9ca3af' : ORANGE, color: 'white', border: 'none', borderRadius: '12px', padding: '0.95rem', fontWeight: 800, fontSize: '1rem', cursor: submitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
+              >
+                {submitting
+                  ? <><span style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Creating your account…</>
+                  : <>🚀 Create Account & Start Learning</>
+                }
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '1rem' }}>
           {step > 1 ? (
-            <button
-              onClick={back}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.75rem 1.5rem', borderRadius: '10px',
-                background: '#f3f4f6', border: '1px solid #e5e7eb',
-                color: '#374151', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
-              }}
-            >
-              <ChevronLeft size={16} /> Back
+            <button onClick={back} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.7rem 1.4rem', borderRadius: '10px', background: '#f3f4f6', border: '1px solid #e5e7eb', color: '#374151', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
+              <ChevronLeft size={15} /> Back
             </button>
-          ) : (
-            <div />
-          )}
+          ) : <div />}
 
-          {step < 5 ? (
-            <button
-              onClick={next}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.75rem 1.75rem', borderRadius: '10px',
-                background: NAVY, border: 'none',
-                color: 'white', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer',
-              }}
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.6rem',
-                padding: '0.85rem 2rem', borderRadius: '10px',
-                background: loading ? '#9ca3af' : ORANGE, border: 'none',
-                color: 'white', fontWeight: 700, fontSize: '0.95rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {loading ? (
-                <>
-                  <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
-                  Analysing Profile…
-                </>
-              ) : (
-                <>🚀 Create Account & Start Learning</>
-              )}
+          {step < 6 && (
+            <button onClick={next} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.7rem 1.75rem', borderRadius: '10px', background: NAVY, border: 'none', color: 'white', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer' }}>
+              {step === 5 ? 'See My Learning Path' : 'Continue'} <ChevronRight size={15} />
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ marginTop: '1.5rem', fontSize: '0.78rem', color: '#9ca3af', textAlign: 'center' }}>
-        By registering, you agree to use this platform for official capacity-building purposes.
+      <div style={{ marginTop: '1.25rem', fontSize: '0.72rem', color: '#9ca3af', textAlign: 'center' }}>
+        SankhyaSetu · MoSPI Skill Intelligence Platform · SIH 2026 — Problem Statement 26101
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); }}`}</style>

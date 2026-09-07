@@ -12,6 +12,73 @@ from app.db.models import Official, Role, Competency, CompetencyScore, Course, E
 router = APIRouter(prefix="/admin", tags=["Admin & Analytics"])
 
 
+@router.get("/officers")
+def list_officers_admin(
+    skip: int = 0, limit: int = 50, db: Session = Depends(get_db)
+):
+    """Paginated list of all officials with their role and readiness data for admin table."""
+    from sqlalchemy import func
+    officials = db.query(Official).offset(skip).limit(limit).all()
+    total = db.query(Official).count()
+
+    result = []
+    for off in officials:
+        # Avg competency score as a proxy for readiness
+        avg_score = (
+            db.query(func.avg(CompetencyScore.current_score))
+            .filter(CompetencyScore.official_id == off.id)
+            .scalar()
+        )
+        readiness_pct = round((float(avg_score or 0) / 5.0) * 100, 1)
+
+        assessment_count = (
+            db.query(AssessmentResult)
+            .filter(AssessmentResult.official_id == off.id)
+            .count()
+        )
+
+        result.append({
+            "id": off.id,
+            "full_name": off.full_name,
+            "email": off.email,
+            "designation": off.designation,
+            "department": off.department,
+            "role_code": off.role.code if off.role else None,
+            "role_name": off.role.name if off.role else None,
+            "is_admin": off.is_admin or False,
+            "onboarding_complete": off.onboarding_complete or False,
+            "readiness_pct": readiness_pct,
+            "assessments_taken": assessment_count,
+            "created_at": off.created_at.isoformat() if off.created_at else None,
+        })
+
+    return {"total": total, "officers": result}
+
+
+@router.get("/assessment-results")
+def list_assessment_results(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+    """Paginated list of all assessment results for admin analytics."""
+    results = (
+        db.query(AssessmentResult)
+        .order_by(AssessmentResult.completed_at.desc())
+        .offset(skip).limit(limit).all()
+    )
+    total = db.query(AssessmentResult).count()
+
+    data = []
+    for r in results:
+        official = db.query(Official).filter_by(id=r.official_id).first()
+        data.append({
+            "id": r.id,
+            "official_id": r.official_id,
+            "official_name": official.full_name if official else "Unknown",
+            "score_percent": float(r.score_percent),
+            "completed_at": r.completed_at.isoformat() if r.completed_at else None,
+        })
+
+    return {"total": total, "results": data}
+
+
 @router.get("/stats")
 def get_admin_stats(db: Session = Depends(get_db)):
     """System-wide summary metrics."""

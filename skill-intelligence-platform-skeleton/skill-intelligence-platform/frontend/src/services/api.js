@@ -2,13 +2,50 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+const api = axios.create({ baseURL: API_BASE_URL });
+
+/* ── Inject JWT token on every request ── */
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('sip_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
+/* ── Auth ── */
+export const loginUser = async (email, password) => {
+  const form = new URLSearchParams();
+  form.append('username', email);
+  form.append('password', password);
+  const res = await axios.post(`${API_BASE_URL}/auth/login`, form, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  return res.data;
+};
+
+export const registerUser = async (payload) => {
+  const res = await api.post('/auth/register', payload);
+  return res.data;
+};
+
+export const getMe = async () => {
+  const res = await api.get('/auth/me');
+  return res.data;
+};
+
+export const updateMe = async (payload) => {
+  const res = await api.put('/auth/me', payload);
+  return res.data;
+};
+
+/* ── Roles ── */
+export const fetchRoles = async () => {
+  const res = await api.get('/competencies/roles');
+  return res.data;
+};
+
+/* ── Officers ── */
 export const fetchOfficers = async () => {
   const res = await api.get('/officers');
   return res.data;
@@ -46,9 +83,14 @@ export const getDemoProfileText = async () => {
   return res.data;
 };
 
+/* ── Assessments ── */
 export const uploadMaterialAndGenerateMcqs = async (formData) => {
+  const token = localStorage.getItem('sip_token');
   const res = await axios.post(`${API_BASE_URL}/assessments/upload`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
   return res.data;
 };
@@ -56,11 +98,12 @@ export const uploadMaterialAndGenerateMcqs = async (formData) => {
 export const submitQuizAnswers = async (assessmentId, officerId, answers) => {
   const res = await api.post(`/assessments/${assessmentId}/submit`, {
     officer_id: officerId,
-    answers: answers,
+    answers,
   });
   return res.data;
 };
 
+/* ── Admin ── */
 export const fetchWorkforceReadiness = async () => {
   const res = await api.get('/admin/workforce-readiness');
   return res.data;
@@ -73,6 +116,16 @@ export const fetchWorkforceHeatmap = async () => {
 
 export const fetchAdminStats = async () => {
   const res = await api.get('/admin/stats');
+  return res.data;
+};
+
+export const fetchAdminOfficers = async (skip = 0, limit = 50) => {
+  const res = await api.get(`/admin/officers?skip=${skip}&limit=${limit}`);
+  return res.data;
+};
+
+export const fetchAssessmentResults = async (skip = 0, limit = 50) => {
+  const res = await api.get(`/admin/assessment-results?skip=${skip}&limit=${limit}`);
   return res.data;
 };
 

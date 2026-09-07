@@ -75,55 +75,107 @@ const ROLE_COMPETENCIES = {
   DEFAULT:  ['Statistical Analysis', 'Data Collection', 'Communication', 'Digital Literacy', 'Report Writing'],
 };
 
+const ALL_50_COURSES = [
+  { id: "MOCK-iGOT-OS-01-BEG", title: "Foundations of Survey & Questionnaire Design", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-01", "Survey Design"] },
+  { id: "MOCK-NSSTA-OS-01-ADV", title: "Advanced Survey Design for Official Statistics", provider: "NSSTA", level: "Advanced", hrs: 8, comps: ["OS-01", "Survey Design"] },
+  { id: "MOCK-iGOT-OS-02-BEG", title: "Introduction to Sampling Techniques", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-02", "Sampling Methodology"] },
+  { id: "MOCK-NSSTA-OS-02-ADV", title: "Advanced Sampling Methods & Estimation", provider: "NSSTA", level: "Advanced", hrs: 8, comps: ["OS-02", "Sampling Methodology"] },
+  { id: "MOCK-iGOT-OS-03-BEG", title: "Basics of National Accounts (GDP/GVA)", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-03", "National Accounts"] },
+  { id: "MOCK-NSSTA-OS-03-INT", title: "National Accounts: Supply-Use Tables & Sector Accounts", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["OS-03", "National Accounts"] },
+  { id: "MOCK-iGOT-OS-04-BEG", title: "Understanding CPI & WPI", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-04", "Price Statistics"] },
+  { id: "MOCK-iGOT-OS-05-BEG", title: "Introduction to Labour Force Statistics", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-05", "Labour Statistics"] },
+  { id: "MOCK-NSSTA-OS-05-INT", title: "Labour Statistics: PLFS Concepts & ILO Standards", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["OS-05", "Labour Statistics"] },
+  { id: "MOCK-iGOT-OS-06-BEG", title: "Basics of Agricultural Statistics", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-06", "Agricultural Statistics"] },
+  { id: "MOCK-NSSTA-OS-06-INT", title: "Agricultural Surveys & Crop Estimation", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["OS-06", "Agricultural Statistics"] },
+  { id: "MOCK-iGOT-OS-07-BEG", title: "Introduction to Industrial Statistics (ASI, IIP)", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-07", "Industrial Statistics"] },
+  { id: "MOCK-iGOT-OS-08-BEG", title: "SDG Indicator Framework for Official Statistics", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-08", "SDG Indicators"] },
+  { id: "MOCK-iGOT-OS-09-BEG", title: "Introduction to Statistical Metadata Standards", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-09", "Metadata Standards"] },
+  { id: "MOCK-NSSTA-OS-09-ADV", title: "Applying NMDS & CMMI in Practice", provider: "NSSTA", level: "Advanced", hrs: 8, comps: ["OS-09", "Metadata Standards"] },
+  { id: "MOCK-iGOT-OS-10-BEG", title: "Foundations of Statistical Data Quality", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["OS-10", "Data Quality Frameworks", "Field Data Collection", "Data Entry & Validation"] },
+  { id: "MOCK-NSSTA-OS-10-ADV", title: "Statistical Quality Assessment Framework Workshop", provider: "NSSTA", level: "Advanced", hrs: 8, comps: ["OS-10", "Data Quality Frameworks"] },
+  { id: "MOCK-iGOT-TC-01-BEG", title: "Python for Beginners", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-01", "Python / R", "Basic Statistics"] },
+  { id: "MOCK-iGOT-TC-01-INT", title: "Python for Statistical Data Analysis", provider: "iGOT", level: "Intermediate", hrs: 6, comps: ["TC-01", "Python / R", "Statistical Analysis"] },
+  { id: "MOCK-iGOT-TC-02-BEG", title: "Introduction to R Programming", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-02", "Python / R"] },
+  { id: "MOCK-NSSTA-TC-02-INT", title: "R for Survey Data Analysis", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["TC-02", "Python / R"] },
+  { id: "MOCK-iGOT-TC-03-BEG", title: "SQL Fundamentals", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-03", "SQL"] },
+  { id: "MOCK-iGOT-TC-03-ADV", title: "Advanced SQL for Data Management", provider: "iGOT", level: "Advanced", hrs: 8, comps: ["TC-03", "SQL"] },
+  { id: "MOCK-iGOT-TC-04-BEG", title: "Introduction to Stata", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-04", "Stata"] },
+  { id: "MOCK-iGOT-TC-05-BEG", title: "Introduction to SPSS", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-05", "SPSS"] },
+  { id: "MOCK-iGOT-TC-06-BEG", title: "Introduction to SAS", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-06", "SAS"] },
+  { id: "MOCK-iGOT-TC-07-BEG", title: "GIS Basics for Statistical Mapping", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-07", "GIS & Mapping"] },
+  { id: "MOCK-NSSTA-TC-07-INT", title: "GIS Applications in Official Statistics", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["TC-07", "GIS & Mapping"] },
+  { id: "MOCK-iGOT-TC-08-BEG", title: "Data Visualization Fundamentals", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-08", "Report Writing"] },
+  { id: "MOCK-iGOT-TC-08-ADV", title: "Advanced Dashboarding & Visual Analytics", provider: "iGOT", level: "Advanced", hrs: 8, comps: ["TC-08", "Report Writing"] },
+  { id: "MOCK-iGOT-TC-09-BEG", title: "Introduction to AI & Machine Learning", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-09", "AI & Machine Learning"] },
+  { id: "MOCK-NSSTA-TC-09-INT", title: "Machine Learning for Official Statistics", provider: "NSSTA", level: "Intermediate", hrs: 6, comps: ["TC-09", "AI & Machine Learning"] },
+  { id: "MOCK-iGOT-TC-10-BEG", title: "Cloud Computing Fundamentals", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-10", "Digital Literacy"] },
+  { id: "MOCK-iGOT-TC-11-BEG", title: "Introduction to APIs & Data Integration", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-11", "APIs"] },
+  { id: "MOCK-iGOT-TC-11-INT", title: "Building API-based Data Pipelines", provider: "iGOT", level: "Intermediate", hrs: 6, comps: ["TC-11", "APIs"] },
+  { id: "MOCK-iGOT-TC-12-BEG", title: "Open Data Principles & Practices", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["TC-12", "Open Data"] },
+  { id: "MOCK-iGOT-DG-01-BEG", title: "Cybersecurity Awareness for Government Officials", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["DG-01", "Cybersecurity"] },
+  { id: "MOCK-iGOT-DG-02-BEG", title: "Data Privacy Fundamentals", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["DG-02", "Data Privacy (DPDP Act)"] },
+  { id: "MOCK-iGOT-DG-02-INT", title: "Data Privacy & Protection in Government Systems", provider: "iGOT", level: "Intermediate", hrs: 6, comps: ["DG-02", "Data Privacy (DPDP Act)"] },
+  { id: "MOCK-iGOT-DG-03-BEG", title: "Digital Signatures & e-Authentication", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["DG-03", "Digital Signatures"] },
+  { id: "MOCK-iGOT-DG-04-BEG", title: "Introduction to Government Cloud (MeghRaj)", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["DG-04", "Gov Cloud"] },
+  { id: "MOCK-iGOT-DG-05-BEG", title: "Understanding Digital Public Infrastructure", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["DG-05", "Data Governance", "Digital Literacy"] },
+  { id: "MOCK-iGOT-BM-01-BEG", title: "Leadership Essentials for Government Officials", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-01", "Leadership"] },
+  { id: "MOCK-iGOT-BM-02-BEG", title: "Effective Communication in Public Service", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-02", "Communication", "Stakeholder Management"] },
+  { id: "MOCK-iGOT-BM-02-ADV", title: "Advanced Communication & Presentation Skills", provider: "iGOT", level: "Advanced", hrs: 8, comps: ["BM-02", "Communication", "Stakeholder Management"] },
+  { id: "MOCK-iGOT-BM-03-BEG", title: "Project Management Basics for Government", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-03", "Project Management", "Strategic Planning"] },
+  { id: "MOCK-iGOT-BM-04-BEG", title: "Ethics in Public Service & Data Representation", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-04", "Ethics in Public Service"] },
+  { id: "MOCK-iGOT-BM-05-BEG", title: "Decision Making Fundamentals", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-05", "Decision Making", "Policy Analysis"] },
+  { id: "MOCK-iGOT-BM-05-ADV", title: "Advanced Decision Making Under Uncertainty", provider: "iGOT", level: "Advanced", hrs: 8, comps: ["BM-05", "Policy Analysis"] },
+  { id: "MOCK-iGOT-BM-06-BEG", title: "Change Management Essentials", provider: "iGOT", level: "Beginner", hrs: 3, comps: ["BM-06", "Change Management"] },
+];
+
 function getDynamicRecommendedCourses(gapItems, role, department) {
   if (!gapItems || gapItems.length === 0) {
-    return [
-      { provider: 'iGOT', title: 'Foundation in Statistical Methods & Official Surveys', level: 'Beginner', hrs: 4, reason: `Recommended for ${role || 'Officer'} in ${department || 'MoSPI'}.` },
-      { provider: 'NSSTA', title: 'Survey Design & Data Quality Frameworks', level: 'Intermediate', hrs: 6, reason: `Matched to core requirements for ${role || 'Officer'}.` },
-      { provider: 'iGOT', title: 'Data Privacy & DPDP Act Compliance', level: 'Beginner', hrs: 3, reason: 'Mandatory digital governance competency.' },
-    ];
+    return ALL_50_COURSES.slice(0, 3).map(c => ({
+      provider: c.provider,
+      title: c.title,
+      level: c.level,
+      hrs: c.hrs,
+      reason: `Catalog match for ${role || 'Officer'} in ${department || 'MoSPI'}.`,
+    }));
   }
 
-  const COURSE_MAP = {
-    'Survey Design': { title: 'Foundations of Survey & Questionnaire Design', provider: 'iGOT', level: 'Beginner', hrs: 3 },
-    'Sampling Methodology': { title: 'Introduction to Sampling Techniques in Official Statistics', provider: 'NSSTA', level: 'Intermediate', hrs: 6 },
-    'Field Data Collection': { title: 'Field Enumeration & CAPI Digital Data Collection', provider: 'NSSTA', level: 'Intermediate', hrs: 5 },
-    'Data Entry & Validation': { title: 'Data Quality Check & Tabulation Procedures', provider: 'iGOT', level: 'Beginner', hrs: 3 },
-    'Basic Statistics': { title: 'Statistical Inference & Descriptive Analytics', provider: 'iGOT', level: 'Beginner', hrs: 4 },
-    'Statistical Analysis': { title: 'Applied Statistical Analysis & Data Processing', provider: 'iGOT', level: 'Intermediate', hrs: 5 },
-    'Data Privacy (DPDP Act)': { title: 'Data Privacy & DPDP Act 2023 Compliance', provider: 'iGOT', level: 'Beginner', hrs: 3 },
-    'GIS & Mapping': { title: 'GIS & Spatial Data Visualization for Statisticians', provider: 'NSSTA', level: 'Intermediate', hrs: 8 },
-    'Python / R': { title: 'Python & R for Official Data Automation', provider: 'iGOT', level: 'Intermediate', hrs: 10 },
-    'Report Writing': { title: 'Official Survey Reporting & Policy Documentation', provider: 'NSSTA', level: 'Beginner', hrs: 4 },
-    'Leadership': { title: 'Executive Leadership & Team Coordination in Govt', provider: 'iGOT', level: 'Intermediate', hrs: 6 },
-    'Policy Analysis': { title: 'Policy Analysis & Evidence-Based Governance', provider: 'NSSTA', level: 'Advanced', hrs: 12 },
-    'Data Governance': { title: 'Data Governance Frameworks & National Data Sharing', provider: 'iGOT', level: 'Intermediate', hrs: 6 },
-    'Stakeholder Management': { title: 'Public Sector Stakeholder Management', provider: 'iGOT', level: 'Intermediate', hrs: 4 },
-    'Digital Literacy': { title: 'Digital Public Infrastructure & Cloud Security', provider: 'iGOT', level: 'Beginner', hrs: 3 },
-    'Communication': { title: 'Effective Communication for Statistical Officers', provider: 'iGOT', level: 'Beginner', hrs: 3 },
-    'Advanced Statistics': { title: 'Time Series Analysis & Econometric Modeling', provider: 'NSSTA', level: 'Advanced', hrs: 14 },
-    'AI & Machine Learning': { title: 'Machine Learning Applications in Official Statistics', provider: 'iGOT', level: 'Advanced', hrs: 15 },
-    'Strategic Planning': { title: 'Strategic Planning & National Accounts Management', provider: 'NSSTA', level: 'Advanced', hrs: 10 },
-    'Cybersecurity': { title: 'Cybersecurity & Government Data Protection', provider: 'iGOT', level: 'Intermediate', hrs: 5 },
-    'Ethics in Public Service': { title: 'Ethics, Confidentiality & Integrity in Statistics', provider: 'NSSTA', level: 'Beginner', hrs: 2 },
-  };
+  const selected = [];
+  const usedTitles = new Set();
 
-  return gapItems.slice(0, 3).map((item) => {
-    const match = COURSE_MAP[item.name] || {
-      title: `Mastering ${item.name}`,
-      provider: 'iGOT',
-      level: item.gap > 1.5 ? 'Beginner' : 'Intermediate',
-      hrs: 4,
-    };
+  for (const item of gapItems) {
+    if (selected.length >= 3) break;
 
-    return {
-      provider: match.provider,
-      title: match.title,
-      level: match.level,
-      hrs: match.hrs,
-      reason: `Directly targets your ${item.name} gap (Deficit: ${item.gap.toFixed(1)} for ${role}).`,
-    };
-  });
+    const match = ALL_50_COURSES.find(c =>
+      !usedTitles.has(c.title) &&
+      c.comps.some(comp => comp.toLowerCase() === item.name.toLowerCase() || item.name.toLowerCase().includes(comp.toLowerCase()))
+    ) || ALL_50_COURSES.find(c => !usedTitles.has(c.title));
+
+    if (match) {
+      usedTitles.add(match.title);
+      selected.push({
+        provider: match.provider,
+        title: match.title,
+        level: match.level,
+        hrs: match.hrs,
+        reason: `Selected from 50-course catalog to close your ${item.name} gap (Deficit: ${item.gap.toFixed(1)} for ${role}).`,
+      });
+    }
+  }
+
+  while (selected.length < 3) {
+    const fallback = ALL_50_COURSES.find(c => !usedTitles.has(c.title));
+    if (!fallback) break;
+    usedTitles.add(fallback.title);
+    selected.push({
+      provider: fallback.provider,
+      title: fallback.title,
+      level: fallback.level,
+      hrs: fallback.hrs,
+      reason: `Core catalog recommendation for ${role || 'Officer'}.`,
+    });
+  }
+
+  return selected;
 }
 
 function NKMGuide({ role }) {

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import Official, Role, CompetencyScore, Competency
 from app.domain.profile_extractor import extract_profile, DEMO_PROFILE_TEXT
+from app.domain.mcq_engine import generate_diagnostic_quiz
 from app.domain.models import OfficerProfile
 
 router = APIRouter(prefix="/officers", tags=["Officers"])
@@ -26,6 +27,13 @@ class ProfileExtractRequest(BaseModel):
     officer_id: Optional[str] = None
     role_code: Optional[str] = "SSO"
     profile_text: str
+
+
+class DiagnosticQuizRequest(BaseModel):
+    role_code: Optional[str] = "JSO"
+    department: Optional[str] = ""
+    designation: Optional[str] = ""
+    profile_text: Optional[str] = ""
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -147,3 +155,18 @@ def extract_officer_profile(payload: ProfileExtractRequest, db: Session = Depend
         "education": [e.__dict__ for e in profile.education],
         "self_reports": [e.__dict__ for e in profile.self_reports],
     }
+
+
+@router.post("/generate-diagnostic-quiz")
+def generate_diagnostic_quiz_endpoint(payload: DiagnosticQuizRequest):
+    """
+    Generate 5 dynamic diagnostic MCQs based on officer role, department, designation, and CV text.
+    """
+    questions = generate_diagnostic_quiz(
+        role_code=payload.role_code or "JSO",
+        department=payload.department or "",
+        designation=payload.designation or "",
+        profile_text=payload.profile_text or "",
+    )
+    return {"questions": questions}
+

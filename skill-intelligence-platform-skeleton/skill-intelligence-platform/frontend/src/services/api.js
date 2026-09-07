@@ -103,6 +103,11 @@ export const submitQuizAnswers = async (assessmentId, officerId, answers) => {
   return res.data;
 };
 
+export const fetchDiagnosticQuiz = async (payload) => {
+  const res = await api.post('/officers/generate-diagnostic-quiz', payload);
+  return res.data;
+};
+
 /* ── Admin ── */
 export const fetchWorkforceReadiness = async () => {
   const res = await api.get('/admin/workforce-readiness');

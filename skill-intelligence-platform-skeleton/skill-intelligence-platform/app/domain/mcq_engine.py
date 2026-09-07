@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from app.config import get_llm_client, get_llm_model
+from app.domain.profile_extractor import parse_llm_json
 
 
 # ─── Data types ───────────────────────────────────────────────────────────────
@@ -323,3 +324,90 @@ def mcq_to_dict(q: MCQQuestion) -> dict:
         "source_excerpt_ref": q.source_excerpt_ref,
         "competency_code": q.competency_code,
     }
+
+
+# ─── Dynamic Registration Diagnostic Quiz Generator ──────────────────────────
+
+DIAGNOSTIC_QUIZ_SYSTEM_PROMPT = """You are an expert assessment creator for India's Official Statistical System (MoSPI / GoI).
+
+Your task: Generate 5 personalized diagnostic multiple-choice questions (MCQs) tailored to an official's specific role, department, designation, and background profile text.
+
+RULES:
+1. Generate exactly 5 questions.
+2. Tailor questions directly to the official's role (e.g. JSO, SSO, MCTP), department, designation, and experience mentioned in their profile text (e.g. Field Surveys, CAPI tools, Price Index, Sampling, Data Privacy, Python/Excel).
+3. Each question must have exactly 4 options ("opts").
+4. "ans" must be the 0-based integer index (0, 1, 2, or 3) of the correct option.
+5. Provide a short explanation for the correct answer.
+6. Return ONLY valid JSON in the exact format shown below.
+
+OUTPUT FORMAT:
+{
+  "questions": [
+    {
+      "q": "Question text here...",
+      "opts": ["Option A text", "Option B text", "Option C text", "Option D text"],
+      "ans": 1,
+      "explanation": "Short explanation of why option B is correct."
+    }
+  ]
+}"""
+
+
+def generate_diagnostic_quiz(
+    role_code: str,
+    department: str = "",
+    designation: str = "",
+    profile_text: str = "",
+) -> list[dict]:
+    """Generate 5 dynamic diagnostic MCQs based on user role, department, designation, and profile text."""
+    client = get_llm_client()
+    model = get_llm_model()
+
+    user_context = (
+        f"Role Code: {role_code}\n"
+        f"Department: {department}\n"
+        f"Designation: {designation}\n"
+        f"Profile / CV Background Text:\n{profile_text}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": DIAGNOSTIC_QUIZ_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Generate 5 diagnostic questions for this official:\n\n{user_context}"},
+            ],
+            temperature=0.3,
+            max_tokens=2048,
+        )
+        raw_json = response.choices[0].message.content or "{}"
+    except Exception as e:
+        print("Diagnostic MCQ generation error:", e)
+        return []
+
+    data = parse_llm_json(raw_json)
+    questions = data.get("questions", [])
+
+    valid_questions = []
+    for item in questions:
+        if (
+            isinstance(item, dict)
+            and item.get("q")
+            and isinstance(item.get("opts"), list)
+            and len(item.get("opts")) == 4
+            and item.get("ans") is not None
+        ):
+            try:
+                ans_idx = int(item["ans"]) % 4
+            except (ValueError, TypeError):
+                ans_idx = 0
+
+            valid_questions.append({
+                "q": str(item["q"]),
+                "opts": [str(o) for o in item["opts"]],
+                "ans": ans_idx,
+                "explanation": str(item.get("explanation", "")),
+            })
+
+    return valid_questions[:5]
+

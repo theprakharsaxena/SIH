@@ -6,7 +6,7 @@ import {
   Loader, Edit3, Star, FileText, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
+import api, { fetchDiagnosticQuiz } from '../services/api';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Point pdfjs worker to CDN (avoids bundling the heavy worker)
@@ -212,6 +212,8 @@ export default function RegisterPage() {
   /* step 3 */
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizScore, setQuizScore] = useState(null); // 0-100 after grading
+  const [dynamicQuestions, setDynamicQuestions] = useState(null);
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
 
   /* step 4 */
   const [selfRatings, setSelfRatings] = useState({}); // { competency: 1-5 }
@@ -220,7 +222,9 @@ export default function RegisterPage() {
   const [gapPreview, setGapPreview] = useState([]); // [{name, selfScore, required, gap}]
 
   /* helpers */
-  const questions = DIAGNOSTIC_QUESTIONS[s1.role] || DIAGNOSTIC_QUESTIONS.DEFAULT;
+  const questions = (dynamicQuestions && dynamicQuestions.length > 0)
+    ? dynamicQuestions
+    : (DIAGNOSTIC_QUESTIONS[s1.role] || DIAGNOSTIC_QUESTIONS.DEFAULT);
   const competencies = ROLE_COMPETENCIES[s1.role] || ROLE_COMPETENCIES.DEFAULT;
   const REQUIRED_LEVEL = 4; // generic requirement for preview
 
@@ -250,7 +254,26 @@ export default function RegisterPage() {
   const next = async () => {
     setError('');
     if (step === 1) { const e = validate1(); if (e) { setError(e); return; } }
-    if (step === 2) { const e = validate2(); if (e) { setError(e); return; } }
+    if (step === 2) {
+      const e = validate2(); if (e) { setError(e); return; }
+      if (!dynamicQuestions && !generatingQuiz) {
+        setGeneratingQuiz(true);
+        fetchDiagnosticQuiz({
+          role_code: s1.role || 'JSO',
+          department: s1.department || '',
+          designation: s1.designation || '',
+          profile_text: profileText || '',
+        }).then(res => {
+          if (res?.questions && res.questions.length > 0) {
+            setDynamicQuestions(res.questions);
+          }
+        }).catch(err => {
+          console.error('Failed to generate dynamic quiz:', err);
+        }).finally(() => {
+          setGeneratingQuiz(false);
+        });
+      }
+    }
     if (step === 3) {
       const e = validate3(); if (e) { setError(e); return; }
       // Grade quiz
@@ -561,31 +584,47 @@ Self-Assessment Average: ${selfAvg}/5
         {/* ══ Step 3: Diagnostic Assessment (AI-generated MCQ) ════════════ */}
         {step === 3 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-            <InfoBox>
-              🤖 <strong>AI Moment #2.</strong> These questions are AI-generated from standard NSSTA reference material for your role ({s1.role || 'Officer'}). Your score contributes <strong>30%</strong> to your baseline competency level — a rough first quiz won't lock in your whole profile.
-            </InfoBox>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {questions.map((q, i) => (
-                <div key={i} style={{ background: '#f9fafb', borderRadius: '12px', padding: '1.1rem 1.25rem', border: '1px solid #e5e7eb' }}>
-                  <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-                    Q{i + 1}. {q.q}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    {q.opts.map((opt, j) => (
-                      <label key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.4rem 0.6rem', borderRadius: '8px', background: quizAnswers[i] == j ? '#eef2fb' : 'white', border: `1.5px solid ${quizAnswers[i] == j ? NAVY : '#e5e7eb'}`, transition: 'all 0.15s' }}>
-                        <input type="radio" name={`q${i}`} value={j} checked={quizAnswers[i] == j} onChange={() => setQuizAnswers(p => ({ ...p, [i]: j }))} style={{ accentColor: NAVY }} />
-                        <span style={{ fontSize: '0.82rem', color: '#374151' }}>{opt}</span>
-                      </label>
-                    ))}
-                  </div>
+            {generatingQuiz ? (
+              <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Loader size={36} style={{ animation: 'spin 1s linear infinite', color: NAVY, marginBottom: '1rem' }} />
+                <div style={{ fontWeight: 700, color: NAVY, fontSize: '1.05rem', marginBottom: '0.4rem' }}>
+                  🤖 AI Generating Personalized Diagnostic Assessment…
                 </div>
-              ))}
-            </div>
+                <div style={{ fontSize: '0.82rem', color: '#64748b', maxWidth: '500px', margin: '0 auto', lineHeight: 1.5 }}>
+                  Creating 5 customized MCQs tailored to your role (<strong>{s1.role || 'Officer'}</strong>), department (<strong>{s1.department || 'MoSPI'}</strong>), designation (<strong>{s1.designation || 'Officer'}</strong>), and extracted profile background.
+                </div>
+              </div>
+            ) : (
+              <>
+                <InfoBox color={dynamicQuestions ? "#f0fdf4" : "#eff6ff"} border={dynamicQuestions ? "#bbf7d0" : "#bfdbfe"} text={dynamicQuestions ? "#166534" : "#1e40af"}>
+                  🤖 <strong>{dynamicQuestions ? "AI-Personalized Quiz" : "AI Moment #2"}.</strong> {dynamicQuestions
+                    ? `These 5 diagnostic questions were dynamically generated by AI specifically for your role (${s1.role}), department (${s1.department}), designation (${s1.designation || 'Officer'}), and extracted CV profile.`
+                    : `These questions are AI-generated from standard NSSTA reference material for your role (${s1.role || 'Officer'}).`} Your score contributes <strong>30%</strong> to your baseline competency level.
+                </InfoBox>
 
-            <div style={{ fontSize: '0.78rem', color: '#9ca3af', textAlign: 'center' }}>
-              {Object.keys(quizAnswers).length} / {questions.length} answered
-            </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {questions.map((q, i) => (
+                    <div key={i} style={{ background: '#f9fafb', borderRadius: '12px', padding: '1.1rem 1.25rem', border: '1px solid #e5e7eb' }}>
+                      <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        Q{i + 1}. {q.q}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {q.opts.map((opt, j) => (
+                          <label key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.4rem 0.6rem', borderRadius: '8px', background: quizAnswers[i] == j ? '#eef2fb' : 'white', border: `1.5px solid ${quizAnswers[i] == j ? NAVY : '#e5e7eb'}`, transition: 'all 0.15s' }}>
+                            <input type="radio" name={`q${i}`} value={j} checked={quizAnswers[i] == j} onChange={() => setQuizAnswers(p => ({ ...p, [i]: j }))} style={{ accentColor: NAVY }} />
+                            <span style={{ fontSize: '0.82rem', color: '#374151' }}>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: '#9ca3af', textAlign: 'center' }}>
+                  {Object.keys(quizAnswers).length} / {questions.length} answered
+                </div>
+              </>
+            )}
           </div>
         )}
 

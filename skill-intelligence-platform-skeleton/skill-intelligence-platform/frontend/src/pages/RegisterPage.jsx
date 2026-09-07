@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   BrainCircuit, User, Upload, ClipboardCheck, BarChart2,
   BookOpen, CheckCircle, AlertCircle, ChevronRight, ChevronLeft,
-  Loader, Edit3, Star,
+  Loader, Edit3, Star, FileText, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Point pdfjs worker to CDN (avoids bundling the heavy worker)
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
@@ -170,8 +175,39 @@ export default function RegisterPage() {
   /* step 2 */
   const [profileText, setProfileText] = useState('');
   const [extracting, setExtracting] = useState(false);
-  const [extracted, setExtracted] = useState(null); // { experiences, trainings, education, ... }
+  const [extracted, setExtracted] = useState(null);
   const [extractedEditable, setExtractedEditable] = useState({ experiences: '', trainings: '', education: '' });
+  const [pdfFile, setPdfFile] = useState(null);     // { name, size }
+  const [pdfParsing, setPdfParsing] = useState(false);
+  const pdfInputRef = useRef(null);
+
+  /* ── PDF → text extractor ── */
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== 'application/pdf') return;
+    setPdfFile({ name: file.name, size: (file.size / 1024).toFixed(0) });
+    setPdfParsing(true);
+    setExtracted(null);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        fullText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      setProfileText(fullText.trim());
+    } catch {
+      setProfileText('');
+      setPdfFile(null);
+      alert('Could not read the PDF. Please paste your background text manually.');
+    } finally {
+      setPdfParsing(false);
+      // reset input so same file can be re-uploaded
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
+    }
+  };
 
   /* step 3 */
   const [quizAnswers, setQuizAnswers] = useState({});
@@ -285,8 +321,13 @@ export default function RegisterPage() {
         trainings:   (d.trainings   || []).map(fmtTraining).join('\n'),
         education:   (d.education   || []).map(fmtEdu).join('\n'),
       });
-    } catch {
-      setError('AI extraction failed. You can still proceed — type your key facts in the text box.');
+    } catch (err) {
+      console.error('Extract-profile error:', err);
+      const msg = err?.response?.data?.detail
+        || err?.response?.data
+        || err?.message
+        || 'Unknown error';
+      setError(`AI extraction failed: ${msg}. You can manually type your key facts below.`);
       setExtracted({ experiences: [], trainings: [], education: [] });
       setExtractedEditable({ experiences: '', trainings: '', education: '' });
     } finally {
@@ -402,24 +443,80 @@ Self-Assessment Average: ${selfAvg}/5
             </InfoBox>
 
             <div>
-              <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontWeight: 600, color: NAVY, fontSize: '0.82rem', marginBottom: '0.5rem' }}>
                 Your CV / Background <span style={{ color: ORANGE }}>*</span>
               </label>
-              <textarea
-                value={profileText}
-                onChange={e => setProfileText(e.target.value)}
-                rows={7}
-                placeholder={`Paste your background — education, past roles, experience, any prior training.\n\nExample: "B.Sc Statistics, Delhi University 2018. 4 years as Field Surveyor with NSS. Completed a Python for Data Analysis course at NSSTA. Currently working on household survey data compilation for CPI."`}
-                style={{ width: '100%', padding: '0.875rem', border: '1.5px solid #d1d5db', borderRadius: '12px', fontSize: '0.85rem', fontFamily: 'inherit', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
-                onFocus={e => e.target.style.borderColor = NAVY}
-                onBlur={e => e.target.style.borderColor = '#d1d5db'}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>{profileText.length} characters</span>
+
+              {/* ── Upload PDF or type ── */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'stretch' }}>
+
+                {/* PDF upload zone */}
+                <div
+                  onClick={() => pdfInputRef.current?.click()}
+                  style={{
+                    flex: '0 0 auto', border: '2px dashed #d1d5db', borderRadius: '12px',
+                    padding: '0.875rem 1.25rem', cursor: 'pointer', textAlign: 'center',
+                    background: pdfFile ? '#f0fdf4' : '#fafafa', transition: 'border-color 0.2s',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.35rem',
+                    minWidth: '160px',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = NAVY}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = '#d1d5db'}
+                >
+                  <input
+                    ref={pdfInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfUpload}
+                    style={{ display: 'none' }}
+                  />
+                  {pdfParsing ? (
+                    <><Loader size={22} color={NAVY} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span style={{ fontSize: '0.72rem', color: NAVY, fontWeight: 600 }}>Reading PDF…</span></>
+                  ) : pdfFile ? (
+                    <>
+                      <FileText size={22} color={GREEN} />
+                      <span style={{ fontSize: '0.7rem', color: GREEN, fontWeight: 700, maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pdfFile.name}</span>
+                      <span style={{ fontSize: '0.65rem', color: '#6b7280' }}>{pdfFile.size} KB · text extracted</span>
+                      <button onClick={e => { e.stopPropagation(); setPdfFile(null); setProfileText(''); setExtracted(null); }}
+                        style={{ marginTop: '0.2rem', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        <X size={10} /> Remove
+                      </button>
+                    </>
+                  ) : (
+                    <><Upload size={22} color="#9ca3af" />
+                    <span style={{ fontSize: '0.72rem', color: '#6b7280', fontWeight: 600 }}>Upload PDF CV</span>
+                    <span style={{ fontSize: '0.62rem', color: '#9ca3af' }}>click to browse</span></>
+                  )}
+                </div>
+
+                {/* OR divider */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '0.72rem', fontWeight: 600, gap: '0.25rem' }}>
+                  <div style={{ width: '1px', flex: 1, background: '#e5e7eb' }} />
+                  OR
+                  <div style={{ width: '1px', flex: 1, background: '#e5e7eb' }} />
+                </div>
+
+                {/* Text area */}
+                <textarea
+                  value={profileText}
+                  onChange={e => { setProfileText(e.target.value); setExtracted(null); setPdfFile(null); }}
+                  rows={5}
+                  placeholder={`Paste your background — education, past roles, experience, any prior training.\n\nExample: "B.Sc Statistics, Delhi University 2018. 4 years as Field Surveyor with NSS. Completed a Python for Data Analysis course at NSSTA…"`}
+                  style={{ flex: 1, padding: '0.875rem', border: '1.5px solid #d1d5db', borderRadius: '12px', fontSize: '0.82rem', fontFamily: 'inherit', lineHeight: 1.6, resize: 'none', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={e => e.target.style.borderColor = NAVY}
+                  onBlur={e => e.target.style.borderColor = '#d1d5db'}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
+                  {profileText.length > 0 ? `${profileText.length} characters ready` : 'Upload PDF or type above'}
+                </span>
                 <button
                   onClick={handleExtract}
-                  disabled={extracting || !profileText.trim()}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: extracting ? '#9ca3af' : NAVY, color: 'white', border: 'none', borderRadius: '8px', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.82rem', cursor: extracting ? 'not-allowed' : 'pointer' }}
+                  disabled={extracting || pdfParsing || !profileText.trim()}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: (extracting || pdfParsing || !profileText.trim()) ? '#9ca3af' : NAVY, color: 'white', border: 'none', borderRadius: '8px', padding: '0.55rem 1.25rem', fontWeight: 700, fontSize: '0.82rem', cursor: (extracting || !profileText.trim()) ? 'not-allowed' : 'pointer' }}
                 >
                   {extracting ? <><Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Extracting…</> : <><BrainCircuit size={14} /> Extract with AI</>}
                 </button>

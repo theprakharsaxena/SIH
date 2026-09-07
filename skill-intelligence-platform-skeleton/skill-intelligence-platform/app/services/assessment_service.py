@@ -227,3 +227,57 @@ def _recompute_score_from_evidence(evidence_rows) -> float:
 def _get_competency_id(db: Session, code: str) -> str | None:
     comp = db.query(Competency).filter_by(code=code).one_or_none()
     return comp.id if comp else None
+
+
+def record_course_quiz_result(
+    db: Session,
+    officer_id: str,
+    competency_code: str,
+    score_percent: float,
+) -> dict:
+    """
+    Record course assessment result, create CompetencyEvidence, recompute score (0-5), and commit.
+    """
+    comp = db.query(Competency).filter_by(code=competency_code.upper()).first()
+    if not comp:
+        # Fallback search by id
+        comp = db.query(Competency).filter_by(id=competency_code).first()
+    if not comp:
+        raise ValueError(f"Competency code '{competency_code}' not found")
+
+    raw_score = round(float(score_percent) / 20.0, 2)
+
+    db.add(CompetencyEvidence(
+        official_id=officer_id,
+        competency_id=comp.id,
+        evidence_type="assessment",
+        raw_fact={"test_percent": score_percent, "source": "course_assessment"},
+        raw_score=raw_score,
+        weight_applied=WEIGHT_ASSESSMENT,
+        extracted_by="learning_path_assessment",
+        source_reference=f"Course Assessment {comp.code}",
+    ))
+
+    # Recompute score from all evidence
+    all_ev = db.query(CompetencyEvidence).filter_by(official_id=officer_id, competency_id=comp.id).all()
+    new_score = _recompute_score_from_evidence(all_ev)
+
+    score_row = db.query(CompetencyScore).filter_by(official_id=officer_id, competency_id=comp.id).first()
+    old_score = float(score_row.current_score) if score_row else 0.0
+
+    if not score_row:
+        score_row = CompetencyScore(official_id=officer_id, competency_id=comp.id)
+        db.add(score_row)
+
+    score_row.current_score = new_score
+    score_row.computed_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {
+        "competency_code": comp.code,
+        "competency_name": comp.name,
+        "score_before": round(old_score, 2),
+        "score_after": round(new_score, 2),
+        "score_percent": score_percent
+    }
+

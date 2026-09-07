@@ -80,6 +80,9 @@ def calculate_gap_report(
     gaps: list[CompetencyGap] = []
 
     for comp_code, (required_level, priority) in requirements.items():
+        if required_level <= 0:
+            continue  # Skip competencies not required for this officer's role
+
         breakdown = scores.get(comp_code)
         current_score = breakdown.final_score if breakdown else 0.0
         gap_value = round(required_level - current_score, 2)

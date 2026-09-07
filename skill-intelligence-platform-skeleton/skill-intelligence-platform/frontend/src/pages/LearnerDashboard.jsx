@@ -9,16 +9,73 @@ import LearningPathRoadmap from '../components/LearningPathRoadmap';
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
 
-/* ─── Competency Radar as a simple table-style view ─── */
-function CompetencyBreakdown({ gapData }) {
-  const [expanded, setExpanded] = useState(false);
-  if (!gapData?.competencies) return null;
+/* ─── Normalize Gap Analysis Data from API (Role-Relevant Competencies Only) ─── */
+function extractCompetencyList(gapData) {
+  if (!gapData) return [];
+  const rawList = gapData.competencies || gapData.gaps || [];
 
-  const comps = gapData.competencies;
-  const visible = expanded ? comps : comps.slice(0, 8);
-  const critical = comps.filter(c => c.gap_severity === 'critical').length;
-  const moderate = comps.filter(c => c.gap_severity === 'moderate').length;
-  const proficient = comps.filter(c => c.gap_severity === 'proficient').length;
+  return rawList
+    .filter(item => {
+      const required = item.required_score ?? item.required_level ?? 0;
+      const current = item.current_score ?? item.current_level ?? 0;
+      // Only include competencies that are required for this officer's role (> 0) or where score exists (> 0)
+      return required > 0 || current > 0;
+    })
+    .map(item => {
+      const code = item.competency_code || item.code || '';
+      const name = item.competency_name || item.name || code;
+      const current = item.current_score ?? item.current_level ?? 0;
+      const required = item.required_score ?? item.required_level ?? 5;
+      const gap = item.gap ?? Math.max(0, required - current);
+
+      let severity = item.gap_severity || item.category || 'critical';
+      if (severity === 'category_c' || gap > 1.5) {
+        severity = 'critical';
+      } else if (severity === 'category_b' || (gap > 0 && gap <= 1.5)) {
+        severity = 'moderate';
+      } else if (severity === 'category_a' || gap <= 0) {
+        severity = 'proficient';
+      }
+
+      return {
+        code,
+        competency_name: name,
+        domain_category: item.domain_category || item.category_name || (code.startsWith('OS') ? '📊 Official Statistics' : code.startsWith('TC') ? '💻 Technical & Computing' : code.startsWith('DG') ? '🏛️ Digital Governance' : '🤝 Behavioural & Managerial'),
+        current_level: current,
+        required_level: required,
+        gap,
+        gap_severity: severity,
+      };
+    });
+}
+
+/* ─── Enhanced Competency Breakdown with Filter Tabs, Search & Exact Deficit Details ─── */
+function CompetencyBreakdown({ gapData, activeFilter, setActiveFilter }) {
+  const [expanded, setExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const comps = extractCompetencyList(gapData);
+  if (comps.length === 0) return null;
+
+  const critical = comps.filter(c => c.gap_severity === 'critical');
+  const moderate = comps.filter(c => c.gap_severity === 'moderate');
+  const proficient = comps.filter(c => c.gap_severity === 'proficient');
+
+  const filtered = comps.filter(c => {
+    if (activeFilter === 'critical' && c.gap_severity !== 'critical') return false;
+    if (activeFilter === 'moderate' && c.gap_severity !== 'moderate') return false;
+    if (activeFilter === 'proficient' && c.gap_severity !== 'proficient') return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const nameMatch = (c.competency_name || '').toLowerCase().includes(q);
+      const codeMatch = (c.code || '').toLowerCase().includes(q);
+      const domainMatch = (c.domain_category || '').toLowerCase().includes(q);
+      if (!nameMatch && !codeMatch && !domainMatch) return false;
+    }
+    return true;
+  });
+
+  const visible = expanded ? filtered : filtered.slice(0, 10);
 
   const severityColor = (sev) => {
     if (sev === 'critical') return '#dc2626';
@@ -29,62 +86,144 @@ function CompetencyBreakdown({ gapData }) {
 
   return (
     <div>
-      {/* Category pills */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.9rem', background: '#fef2f2', borderRadius: '20px', border: '1px solid #fecaca', fontSize: '0.8rem', fontWeight: 600, color: '#dc2626' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }} />
-          Critical Gap: {critical}
+      {/* Category Pills & Filter Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setActiveFilter('all')}
+            style={{
+              padding: '0.4rem 0.85rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+              background: activeFilter === 'all' ? NAVY : '#f3f4f6', color: activeFilter === 'all' ? 'white' : '#4b5563',
+              border: activeFilter === 'all' ? `1px solid ${NAVY}` : '1px solid #e5e7eb'
+            }}
+          >
+            All ({comps.length})
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('critical')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.85rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+              background: activeFilter === 'critical' ? '#dc2626' : '#fef2f2', color: activeFilter === 'critical' ? 'white' : '#dc2626',
+              border: '1px solid #fecaca'
+            }}
+          >
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeFilter === 'critical' ? 'white' : '#dc2626' }} />
+            Critical Gaps ({critical.length})
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('moderate')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.85rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+              background: activeFilter === 'moderate' ? '#d97706' : '#fffbeb', color: activeFilter === 'moderate' ? 'white' : '#d97706',
+              border: '1px solid #fde68a'
+            }}
+          >
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeFilter === 'moderate' ? 'white' : '#d97706' }} />
+            Moderate Gaps ({moderate.length})
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('proficient')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.85rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+              background: activeFilter === 'proficient' ? '#16a34a' : '#f0fdf4', color: activeFilter === 'proficient' ? 'white' : '#16a34a',
+              border: '1px solid #bbf7d0'
+            }}
+          >
+            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeFilter === 'proficient' ? 'white' : '#16a34a' }} />
+            Proficient ({proficient.length})
+          </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.9rem', background: '#fffbeb', borderRadius: '20px', border: '1px solid #fde68a', fontSize: '0.8rem', fontWeight: 600, color: '#d97706' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#d97706' }} />
-          Moderate Gap: {moderate}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.9rem', background: '#f0fdf4', borderRadius: '20px', border: '1px solid #bbf7d0', fontSize: '0.8rem', fontWeight: 600, color: '#16a34a' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a' }} />
-          Proficient: {proficient}
-        </div>
+
+        {/* Search Bar */}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 Search gap by name or code (e.g. OS-01, Python)..."
+          style={{
+            padding: '0.4rem 0.85rem', border: '1.5px solid #d1d5db', borderRadius: '8px',
+            fontSize: '0.8rem', outline: 'none', fontFamily: 'inherit', minWidth: '240px'
+          }}
+        />
       </div>
 
-      {/* Competency bars */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      {/* Active Filter Header Notice */}
+      <div style={{ background: '#f8fafc', padding: '0.6rem 0.85rem', borderRadius: '8px', borderLeft: `3px solid ${activeFilter === 'critical' ? '#dc2626' : activeFilter === 'moderate' ? '#d97706' : activeFilter === 'proficient' ? '#16a34a' : NAVY}`, marginBottom: '1rem', fontSize: '0.78rem', color: '#334155' }}>
+        <strong>Showing {filtered.length} Competencies:</strong> {activeFilter === 'critical' ? 'Listing all critical skill deficits (deficit ≥ 2.0 pts required for target role).' : activeFilter === 'moderate' ? 'Listing moderate skill gaps (deficit 0.1 to 1.9 pts).' : activeFilter === 'proficient' ? 'Competencies where current score meets or exceeds role target.' : 'All 35 official MoSPI NKM framework competencies.'}
+      </div>
+
+      {/* Competency Gap List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {visible.map(comp => {
           const current = comp.current_level ?? 0;
           const required = comp.required_level ?? 5;
+          const gapAmount = Math.max(0, required - current);
           const pct = Math.round((current / 5) * 100);
           const color = severityColor(comp.gap_severity);
+
           return (
-            <div key={comp.code} style={{ padding: '0.75rem 1rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #f3f4f6' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6b7280', background: '#e5e7eb', padding: '0.1rem 0.45rem', borderRadius: '4px', fontFamily: 'monospace' }}>{comp.code}</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: NAVY }}>{comp.competency_name}</span>
+            <div key={comp.code} style={{ padding: '0.85rem 1.1rem', background: comp.gap_severity === 'critical' ? '#fff5f5' : comp.gap_severity === 'moderate' ? '#fffdf5' : '#f8fafc', borderRadius: '12px', border: `1px solid ${comp.gap_severity === 'critical' ? '#fecaca' : comp.gap_severity === 'moderate' ? '#fde68a' : '#e2e8f0'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: NAVY, background: '#e2e8f0', padding: '0.15rem 0.55rem', borderRadius: '6px', fontFamily: 'monospace' }}>
+                    {comp.code}
+                  </span>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: NAVY }}>{comp.competency_name}</span>
+                    {comp.domain_category && (
+                      <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: '0.6rem', background: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                        {comp.domain_category}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>{current.toFixed(1)} / {required}</span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color, background: color + '15', padding: '0.15rem 0.5rem', borderRadius: '10px', textTransform: 'capitalize' }}>
-                    {comp.gap_severity === 'proficient' ? '✓ OK' : `Gap: ${(required - current).toFixed(1)}`}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155' }}>
+                      Current: {current.toFixed(1)} <span style={{ color: '#94a3b8' }}>/ Req: {required.toFixed(1)}</span>
+                    </div>
+                    {comp.gap_severity !== 'proficient' ? (
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626' }}>
+                        Missing: -{gapAmount.toFixed(1)} pts ({Math.round((gapAmount / required) * 100)}% gap)
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a' }}>
+                        Met Role Target ✓
+                      </div>
+                    )}
+                  </div>
+
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color, background: color + '18', padding: '0.25rem 0.65rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                    {comp.gap_severity === 'critical' ? '🔴 Critical Gap' : comp.gap_severity === 'moderate' ? '🟡 Moderate Gap' : '🟢 Proficient'}
                   </span>
                 </div>
               </div>
-              <div style={{ height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${pct}%`, height: '100%', background: comp.gap_severity === 'proficient' ? '#16a34a' : comp.gap_severity === 'moderate' ? '#d97706' : '#dc2626', borderRadius: '3px', transition: 'width 0.6s ease' }} />
+
+              {/* Progress bar */}
+              <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.35rem' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '4px', transition: 'width 0.6s ease' }} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {comps.length > 8 && (
+      {filtered.length > 10 && (
         <button
           onClick={() => setExpanded(!expanded)}
-          style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: NAVY, fontWeight: 600, fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem 0' }}
+          style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: NAVY, fontWeight: 700, fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem 0' }}
         >
           {expanded ? <ChevronUp style={{ width: '16px', height: '16px' }} /> : <ChevronDown style={{ width: '16px', height: '16px' }} />}
-          {expanded ? 'Show less' : `Show ${comps.length - 8} more competencies`}
+          {expanded ? 'Show less' : `Show all ${filtered.length - 10} more missing competencies`}
         </button>
       )}
     </div>
   );
+}
 }
 
 /* ─── Course Recommendation Card ─── */
@@ -116,6 +255,7 @@ export default function LearnerDashboard({ selectedOfficer, gapData, recsData, o
   const [profileText, setProfileText] = useState('');
   const [uploading, setUploading]     = useState(false);
   const [showUpload, setShowUpload]   = useState(false);
+  const [activeGapFilter, setActiveGapFilter] = useState('all');
 
   const handleExtract = async () => {
     if (!profileText.trim() || !selectedOfficer) return;
@@ -214,29 +354,65 @@ export default function LearnerDashboard({ selectedOfficer, gapData, recsData, o
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
             {/* Overall readiness donut */}
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.25rem', border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', gridColumn: '1', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', minHeight: '120px' }}>
+            <div
+              onClick={() => setActiveGapFilter('all')}
+              style={{ background: activeGapFilter === 'all' ? '#f8fafc' : 'white', borderRadius: '14px', padding: '1.25rem', border: activeGapFilter === 'all' ? `2px solid ${NAVY}` : '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', minHeight: '120px' }}
+            >
               <div style={{ fontSize: '2.5rem', fontWeight: 900, color: overall >= 60 ? '#16a34a' : overall >= 30 ? '#d97706' : '#dc2626', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>
                 {overall.toFixed(0)}%
               </div>
               <div style={{ fontSize: '0.78rem', color: '#6b7280', fontWeight: 600, textAlign: 'center' }}>Overall Readiness<br />for {gapData?.role_code ?? selectedOfficer.role_code}</div>
             </div>
 
-            <div style={{ background: '#fef2f2', borderRadius: '14px', padding: '1.25rem', border: '1px solid #fecaca', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem' }}>
+            {/* Critical Gaps Stat Box */}
+            <div
+              onClick={() => setActiveGapFilter('critical')}
+              style={{
+                background: activeGapFilter === 'critical' ? '#fee2e2' : '#fef2f2',
+                borderRadius: '14px', padding: '1.25rem',
+                border: activeGapFilter === 'critical' ? '2.5px solid #dc2626' : '1px solid #fecaca',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+            >
               <AlertTriangle style={{ width: '24px', height: '24px', color: '#dc2626' }} />
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#dc2626', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>{criticalGaps}</div>
-              <div style={{ fontSize: '0.78rem', color: '#dc2626', fontWeight: 600 }}>Critical Gaps</div>
+              <div style={{ fontSize: '0.78rem', color: '#dc2626', fontWeight: 700 }}>Critical Gaps (Click to view)</div>
             </div>
 
-            <div style={{ background: '#fffbeb', borderRadius: '14px', padding: '1.25rem', border: '1px solid #fde68a', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem' }}>
+            {/* Moderate Gaps Stat Box */}
+            <div
+              onClick={() => setActiveGapFilter('moderate')}
+              style={{
+                background: activeGapFilter === 'moderate' ? '#fef3c7' : '#fffbeb',
+                borderRadius: '14px', padding: '1.25rem',
+                border: activeGapFilter === 'moderate' ? '2.5px solid #d97706' : '1px solid #fde68a',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+            >
               <TrendingDown style={{ width: '24px', height: '24px', color: '#d97706' }} />
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#d97706', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>{slightGaps}</div>
-              <div style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: 600 }}>Moderate Gaps</div>
+              <div style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: 700 }}>Moderate Gaps (Click to view)</div>
             </div>
 
-            <div style={{ background: '#f0fdf4', borderRadius: '14px', padding: '1.25rem', border: '1px solid #bbf7d0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem' }}>
+            {/* Proficient Stat Box */}
+            <div
+              onClick={() => setActiveGapFilter('proficient')}
+              style={{
+                background: activeGapFilter === 'proficient' ? '#dcfce7' : '#f0fdf4',
+                borderRadius: '14px', padding: '1.25rem',
+                border: activeGapFilter === 'proficient' ? '2.5px solid #16a34a' : '1px solid #bbf7d0',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+            >
               <CheckCircle style={{ width: '24px', height: '24px', color: '#16a34a' }} />
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#16a34a', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>{noGaps}</div>
-              <div style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 600 }}>Proficient</div>
+              <div style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 700 }}>Proficient Areas (Click to view)</div>
             </div>
           </div>
 
@@ -246,10 +422,10 @@ export default function LearnerDashboard({ selectedOfficer, gapData, recsData, o
               Competency Analysis & Target Benchmarks
             </div>
             <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '1.25rem' }}>
-              Your current assessed levels vs. official MoSPI NKM role requirements ({gapData?.role_code ?? selectedOfficer.role_code})
+              Detailed breakdown of current levels vs. official NKM target benchmarks for {gapData?.role_code ?? selectedOfficer.role_code}
             </div>
             {gapData ? (
-              <CompetencyBreakdown gapData={gapData} />
+              <CompetencyBreakdown gapData={gapData} activeFilter={activeGapFilter} setActiveFilter={setActiveGapFilter} />
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
                 <Target style={{ width: '32px', height: '32px', margin: '0 auto 0.5rem' }} />
@@ -263,7 +439,8 @@ export default function LearnerDashboard({ selectedOfficer, gapData, recsData, o
             <LearningPathRoadmap
               recommendations={recsData?.recommendations || []}
               roleCode={gapData?.role_code ?? selectedOfficer.role_code}
-              onStartAssessment={onGoAssessment}
+              selectedOfficer={selectedOfficer}
+              onRefreshData={onRefreshData}
             />
           </div>
         </>

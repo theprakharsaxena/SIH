@@ -411,3 +411,89 @@ def generate_diagnostic_quiz(
 
     return valid_questions[:5]
 
+
+COURSE_QUIZ_SYSTEM_PROMPT = """You are an expert statistical & technical assessment author for MoSPI (Ministry of Statistics and Programme Implementation, Govt of India) and iGOT Karmayogi.
+
+Your task: Generate 5 high-quality, specialized multiple-choice diagnostic questions (MCQs) tailored specifically to a course title, competency code, and role level.
+
+RULES:
+1. Generate exactly 5 questions testing practical & technical concepts relevant to the course.
+2. Each question must have exactly 4 options ("opts").
+3. "ans" must be the 0-based integer index (0, 1, 2, or 3) of the correct option.
+4. Provide a clear, educational explanation for the correct answer.
+5. Return ONLY valid JSON in the exact format shown below.
+
+OUTPUT FORMAT:
+{
+  "questions": [
+    {
+      "q": "Question text...",
+      "opts": ["Option A text", "Option B text", "Option C text", "Option D text"],
+      "ans": 0,
+      "explanation": "Short explanation of why option A is correct."
+    }
+  ]
+}"""
+
+
+def generate_course_quiz(
+    course_title: str,
+    competency_code: str,
+    competency_name: str = "",
+    role_code: str = "SSO",
+    level: str = "Intermediate",
+) -> list[dict]:
+    """Generate 5 dynamic LLM-grounded MCQs for a specific course & competency assessment."""
+    client = get_llm_client()
+    model = get_llm_model()
+
+    user_context = (
+        f"Course Title: {course_title}\n"
+        f"Competency Code: {competency_code}\n"
+        f"Competency Name: {competency_name}\n"
+        f"Target Role Code: {role_code}\n"
+        f"Course Level: {level}"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": COURSE_QUIZ_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Generate 5 quiz questions for this course assessment:\n\n{user_context}"},
+            ],
+            temperature=0.4,
+            max_tokens=2048,
+        )
+        raw_json = response.choices[0].message.content or "{}"
+    except Exception as e:
+        print("Course MCQ generation LLM error:", e)
+        return []
+
+    data = parse_llm_json(raw_json)
+    questions = data.get("questions", [])
+
+    valid_questions = []
+    for item in questions:
+        if (
+            isinstance(item, dict)
+            and item.get("q")
+            and isinstance(item.get("opts"), list)
+            and len(item.get("opts")) == 4
+            and item.get("ans") is not None
+        ):
+            try:
+                ans_idx = int(item["ans"]) % 4
+            except (ValueError, TypeError):
+                ans_idx = 0
+
+            valid_questions.append({
+                "q": str(item["q"]),
+                "opts": [str(o) for o in item["opts"]],
+                "ans": ans_idx,
+                "explanation": str(item.get("explanation", "")),
+            })
+
+    return valid_questions[:5]
+
+

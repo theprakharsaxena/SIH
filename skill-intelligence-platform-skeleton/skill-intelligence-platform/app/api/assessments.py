@@ -109,3 +109,57 @@ def submit_assessment(
         raise HTTPException(status_code=500, detail=f"Quiz submission failed: {str(e)}")
 
     return result
+
+
+class CourseAssessmentSubmitRequest(BaseModel):
+    officer_id: str
+    competency_code: str
+    score_percent: float
+
+
+@router.post("/submit-course-quiz")
+def submit_course_quiz_endpoint(
+    payload: CourseAssessmentSubmitRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Direct endpoint for learning path course assessment submission.
+    Updates competency score, evidence, and triggers roadmap redesign.
+    """
+    from app.services.assessment_service import record_course_quiz_result
+    try:
+        res = record_course_quiz_result(
+            db=db,
+            officer_id=payload.officer_id,
+            competency_code=payload.competency_code,
+            score_percent=payload.score_percent,
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Course quiz update failed: {str(e)}")
+
+
+class CourseQuizGenerateRequest(BaseModel):
+    course_title: str
+    competency_code: str
+    competency_name: Optional[str] = ""
+    role_code: Optional[str] = "SSO"
+    level: Optional[str] = "Intermediate"
+
+
+@router.post("/generate-course-quiz")
+def generate_course_quiz_endpoint(payload: CourseQuizGenerateRequest):
+    """
+    Generate 5 dynamic, AI-grounded MCQs for a specific course assessment via LLM.
+    """
+    from app.domain.mcq_engine import generate_course_quiz
+    questions = generate_course_quiz(
+        course_title=payload.course_title,
+        competency_code=payload.competency_code,
+        competency_name=payload.competency_name or "",
+        role_code=payload.role_code or "SSO",
+        level=payload.level or "Intermediate",
+    )
+    return {"questions": questions}
+
+

@@ -103,6 +103,20 @@ export const submitQuizAnswers = async (assessmentId, officerId, answers) => {
   return res.data;
 };
 
+export const submitCourseQuiz = async (officerId, competencyCode, scorePercent) => {
+  const res = await api.post('/assessments/submit-course-quiz', {
+    officer_id: officerId,
+    competency_code: competencyCode,
+    score_percent: scorePercent,
+  });
+  return res.data;
+};
+
+export const fetchCourseQuiz = async (payload) => {
+  const res = await api.post('/assessments/generate-course-quiz', payload);
+  return res.data;
+};
+
 export const fetchDiagnosticQuiz = async (payload) => {
   const res = await api.post('/officers/generate-diagnostic-quiz', payload);
   return res.data;

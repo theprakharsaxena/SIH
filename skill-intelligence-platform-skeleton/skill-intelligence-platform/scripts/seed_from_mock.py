@@ -22,8 +22,11 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal, engine
 from app.db.models import (
     Base, Competency, Role, RoleCompetencyRequirement,
-    Course, CourseCompetency,
+    Course, CourseCompetency, Official,
 )
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 from app.adapters.course_catalog.mock_adapter import MockCourseCatalogAdapter
 from app.config import MOCK_CATALOG_PATH
 
@@ -63,6 +66,80 @@ def upsert_role(db: Session, code: str, name: str,
     obj.source_note = "Prototype. JSO/SSO=SSS cadre; MCTP-II/III=ISS cadre — two real service hierarchies simplified for MVP."
     db.flush()
     return obj
+
+
+def seed_officials(db: Session, code_to_role: dict):
+    print("Seeding demo officials / admin accounts...")
+    demo_users = [
+        {
+            "email": "admin@mospi.gov.in",
+            "full_name": "MoSPI Admin",
+            "password": "admin123",
+            "is_admin": True,
+            "role_code": "MCTP-III",
+            "department": "Directorate General",
+            "designation": "System Administrator",
+        },
+        {
+            "email": "anika.sharma@mospi.gov.in",
+            "full_name": "Anika Sharma",
+            "password": "password123",
+            "is_admin": False,
+            "role_code": "JSO",
+            "department": "National Sample Survey Office (NSSO)",
+            "designation": "Junior Statistical Officer",
+            "years_experience": 3,
+            "highest_qualification": "Master's Degree",
+            "field_of_study": "Statistics",
+            "university": "Delhi University",
+            "graduation_year": 2021,
+        },
+        {
+            "email": "jso@mospi.gov.in",
+            "full_name": "JSO Officer",
+            "password": "jso123",
+            "is_admin": False,
+            "role_code": "JSO",
+            "department": "Field Operations Division",
+            "designation": "Junior Statistical Officer",
+        },
+        {
+            "email": "sso@mospi.gov.in",
+            "full_name": "SSO Officer",
+            "password": "sso123",
+            "is_admin": False,
+            "role_code": "SSO",
+            "department": "National Accounts Division",
+            "designation": "Senior Statistical Officer",
+        },
+    ]
+
+    count = 0
+    for u in demo_users:
+        official = db.query(Official).filter_by(email=u["email"]).one_or_none()
+        if official is None:
+            official = Official(email=u["email"])
+            db.add(official)
+        
+        role_id = code_to_role.get(u["role_code"])
+        official.full_name = u["full_name"]
+        official.hashed_password = pwd_context.hash(u["password"])
+        official.is_admin = u["is_admin"]
+        official.role_id = role_id
+        official.department = u.get("department")
+        official.designation = u.get("designation")
+        official.years_experience = u.get("years_experience")
+        official.highest_qualification = u.get("highest_qualification")
+        official.field_of_study = u.get("field_of_study")
+        official.university = u.get("university")
+        official.graduation_year = u.get("graduation_year")
+        official.auth_source_system = "local"
+        official.onboarding_complete = True
+        count += 1
+
+    db.commit()
+    print(f"  ✓ {count} demo officials seeded")
+
 
 
 # ─── 1. Seed competencies ─────────────────────────────────────────────────────
@@ -270,6 +347,7 @@ def main():
         code_to_role = seed_roles(db)
         seed_role_competency_matrix(db, code_to_comp, code_to_role)
         seed_courses(db, code_to_comp)
+        seed_officials(db, code_to_role)
         print("\n✅ Seed complete. Run scripts/verify_seed.py to confirm.")
     except Exception as e:
         db.rollback()

@@ -11,13 +11,27 @@ load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://sih:sih_secret@localhost:5432/skill_intelligence"
+    "sqlite:///./skill_intelligence.db"
 )
+
+# Fallback to SQLite if PostgreSQL is specified in env but connection is unavailable
+if DATABASE_URL.startswith("postgresql"):
+    try:
+        test_engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+        conn = test_engine.connect()
+        conn.close()
+    except Exception:
+        print("⚠️ PostgreSQL unavailable on localhost:5432. Falling back to local SQLite database.")
+        DATABASE_URL = "sqlite:///./skill_intelligence.db"
+
+is_sqlite = DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if is_sqlite else {}
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # detects stale connections
-    echo=False,           # set True during debug to log all SQL
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    echo=False,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

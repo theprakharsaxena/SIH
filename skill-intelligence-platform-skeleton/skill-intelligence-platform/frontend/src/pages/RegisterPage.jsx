@@ -446,6 +446,31 @@ export default function RegisterPage() {
       questions.forEach((q, i) => { if (parseInt(quizAnswers[i]) === q.ans) correct++; });
       const score = Math.round((correct / questions.length) * 100);
       setQuizScore(score);
+
+      // Dynamically initialize Step 4 selfRatings based on quiz score & profile background
+      const quizBaseVal = Math.max(1, Math.min(5, Math.round((score / 100) * 5)));
+      const pTextLower = (profileText || '').toLowerCase() + ' ' + JSON.stringify(extractedEditable || {}).toLowerCase();
+
+      const newSelfRatings = { ...selfRatings };
+      competencies.forEach(compName => {
+        if (newSelfRatings[compName] === undefined) {
+          let rating = quizBaseVal;
+          const cLower = compName.toLowerCase();
+          if (pTextLower.includes(cLower) ||
+              (cLower.includes('survey') && pTextLower.includes('survey')) ||
+              (cLower.includes('sampling') && pTextLower.includes('sample')) ||
+              (cLower.includes('python') && pTextLower.includes('python')) ||
+              (cLower.includes('sql') && pTextLower.includes('sql')) ||
+              (cLower.includes('statistics') && pTextLower.includes('stat')) ||
+              (cLower.includes('privacy') && pTextLower.includes('privacy')) ||
+              (cLower.includes('gis') && pTextLower.includes('gis')) ||
+              (cLower.includes('report') && pTextLower.includes('report'))) {
+            rating = Math.min(5, rating + 1);
+          }
+          newSelfRatings[compName] = rating;
+        }
+      });
+      setSelfRatings(newSelfRatings);
     }
     if (step === 4) {
       // Build gap preview from self-ratings
@@ -602,6 +627,7 @@ Self-Assessment Average: ${selfAvg}/5
 
         {/* ══ Step 1: Basic Registration ══════════════════════════════════ */}
         {step === 1 && (
+            <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <InfoBox>
               📋 <strong>No AI here.</strong> Plain data entry — your account details and role assignment. This is saved directly to your officer record.
@@ -621,6 +647,13 @@ Self-Assessment Average: ${selfAvg}/5
             </div>
             <Input label="Current Designation" value={s1.designation} onChange={e => setS1(p => ({ ...p, designation: e.target.value }))} placeholder="e.g. Statistical Officer" sub="(optional)" />
           </div>
+          <div style={{ marginTop: '2rem', padding: '1rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
+            <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 600, marginBottom: '0.4rem' }}>DEMO ACCOUNTS</div>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.6 }}>
+              <strong>Learner:</strong> Rajesh Kumar / rajesh.kumar@mospi.gov.in / secure456 / Junior Statistical Officer (JSO) / MOSPI - Field Operations / Field Investigator<br />
+            </div>
+          </div>
+            </>
         )}
 
         {/* ══ Step 2: Profile Upload + AI Extraction ══════════════════════ */}
@@ -790,6 +823,29 @@ Self-Assessment Average: ${selfAvg}/5
                 <div style={{ fontSize: '0.78rem', color: '#9ca3af', textAlign: 'center' }}>
                   {Object.keys(quizAnswers).length} / {questions.length} answered
                 </div>
+
+                {/* Score summary banner when all answered */}
+                {Object.keys(quizAnswers).length === questions.length && (() => {
+                  let correct = 0;
+                  questions.forEach((q, i) => { if (parseInt(quizAnswers[i]) === q.ans) correct++; });
+                  const pct = Math.round((correct / questions.length) * 100);
+                  const isGood = pct >= 60;
+                  return (
+                    <div style={{ background: isGood ? '#f0fdf4' : '#fffbeb', border: `1.5px solid ${isGood ? '#bbf7d0' : '#fde68a'}`, borderRadius: '14px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', animation: 'fadeIn 0.3s ease' }}>
+                      <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: isGood ? GREEN : '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <span style={{ color: 'white', fontWeight: 900, fontSize: '1.05rem', fontFamily: "'Poppins', sans-serif" }}>{pct}%</span>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 800, color: NAVY, fontSize: '0.92rem' }}>
+                          Diagnostic Assessment Result: {correct} / {questions.length} Correct ({pct}%)
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '0.2rem', lineHeight: 1.45 }}>
+                          🎯 Excellent! Your diagnostic score will <strong>automatically pre-fill your competency baseline sliders</strong> in Step 4.
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>
@@ -798,13 +854,14 @@ Self-Assessment Average: ${selfAvg}/5
         {/* ══ Step 4: Self-Assessment Sliders ════════════════════════════ */}
         {step === 4 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-            <InfoBox color="#fffbeb" border="#fde68a" text="#92400e">
-              📊 <strong>No AI here.</strong> Rate yourself honestly on each competency relevant to your role ({s1.role}). This is the <em>smallest</em> weighted input (<strong>10%</strong>) — so being a bit modest or confident won't skew your real score much.
+            <InfoBox color="#eef2fb" border="#c7d2fe" text="#1e40af">
+              🤖 <strong>AI-Dynamic Pre-Filled Baseline.</strong> We've automatically pre-filled your baseline sliders below based on your <strong>Diagnostic Assessment Score ({quizScore}%)</strong> and your extracted background text. Feel free to adjust any slider to fine-tune your self-rating.
             </InfoBox>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
               {competencies.map(name => {
-                const val = selfRatings[name] ?? 3;
+                const dynamicDefault = Math.max(1, Math.min(5, Math.round(((quizScore || 60) / 100) * 5)));
+                const val = selfRatings[name] ?? dynamicDefault;
                 const color = val >= 4 ? GREEN : val >= 2 ? '#d97706' : '#dc2626';
                 const labels = ['', 'Beginner', 'Basic', 'Intermediate', 'Proficient', 'Expert'];
                 return (

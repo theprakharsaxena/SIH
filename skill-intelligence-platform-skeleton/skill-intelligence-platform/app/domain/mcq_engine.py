@@ -19,7 +19,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional
 
-from app.config import get_llm_client, get_llm_model
+from app.config import get_llm_client, get_llm_model, get_fast_llm_model, execute_llm_with_fallback
 from app.domain.profile_extractor import parse_llm_json
 
 
@@ -97,6 +97,32 @@ def extract_text_from_txt(filepath: str) -> list[tuple[int, str]]:
     return chunks
 
 
+def extract_text_from_pptx(filepath: str) -> list[tuple[int, str]]:
+    """
+    Returns list of (slide_number, slide_text) from a PPTX file.
+    """
+    try:
+        from pptx import Presentation
+        prs = Presentation(filepath)
+        slides = []
+        for i, slide in enumerate(prs.slides, start=1):
+            text_runs = []
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text:
+                    text_runs.append(shape.text.strip())
+            slide_text = "\n".join(text_runs).strip()
+            if len(slide_text) > 30:
+                slides.append((i, slide_text))
+        return slides
+    except ImportError:
+        # Fallback if python-pptx is not installed
+        with open(filepath, "rb") as f:
+            content = f.read().decode("utf-8", errors="ignore")
+        cleaned = re.sub(r"[^\x20-\x7E\n\r]", " ", content)
+        chunks = [c.strip() for c in cleaned.split("\n\n") if len(c.strip()) > 40]
+        return list(enumerate(chunks[:10], start=1))
+
+
 def extract_text(filepath: str) -> list[tuple[int, str]]:
     """Auto-detect file type and extract text chunks."""
     ext = os.path.splitext(filepath)[1].lower()
@@ -104,13 +130,15 @@ def extract_text(filepath: str) -> list[tuple[int, str]]:
         return extract_text_from_pdf(filepath)
     elif ext in (".docx", ".doc"):
         return extract_text_from_docx(filepath)
+    elif ext in (".pptx", ".ppt"):
+        return extract_text_from_pptx(filepath)
     elif ext == ".txt":
         return extract_text_from_txt(filepath)
     else:
-        raise ValueError(f"Unsupported file type: {ext}. Supported: .pdf, .docx, .txt")
+        raise ValueError(f"Unsupported file type: {ext}. Supported: .pdf, .docx, .pptx, .txt")
 
 
-# ─── MCQ generation prompt ────────────────────────────────────────────────────
+# ─── MCQ generation prompt & Classification ───────────────────────────────────
 
 MCQ_SYSTEM_PROMPT = """You are an expert question paper setter for official statistics and data management training.
 
@@ -123,9 +151,11 @@ STRICT RULES:
 4. Never repeat question content across questions.
 5. The correct answer must be explicitly supported by the source text.
 6. Explanation must cite the relevant part of the source text.
+7. CRITICAL: If the excerpt's content does not clearly relate to the target competency, or if it lacks substantive verifiable facts, return "skip": true in the output.
 
 OUTPUT FORMAT (return ONLY valid JSON, no markdown, no explanation outside JSON):
 {
+  "skip": false,
   "questions": [
     {
       "question_text": "...",
@@ -142,7 +172,48 @@ OUTPUT FORMAT (return ONLY valid JSON, no markdown, no explanation outside JSON)
   ]
 }
 
-Difficulty levels: 'easy' (recall), 'medium' (understanding), 'difficult' (application), 'hots' (analysis)."""
+Difficulty levels: 'easy' (recall), 'medium' (understanding), 'hard' (application/analysis)."""
+
+
+def classify_chunk_competency(
+    chunk_text: str,
+    target_competency: str,
+    known_competencies: Optional[list[str]] = None,
+) -> tuple[bool, str]:
+    """
+    Classification step before question generation.
+    Verifies if chunk text actually relates to target_competency.
+
+    Returns:
+        (is_relevant: bool, detected_competency_code: str)
+    """
+    client = get_llm_client()
+    model = get_llm_model()
+
+    prompt = f"""Target Competency: {target_competency}
+
+Source Excerpt:
+\"\"\"
+{chunk_text[:1000]}
+\"\"\"
+
+Task: Does this excerpt contain substantive information relevant to '{target_competency}'?
+Respond with JSON only: {{"relevant": true, "matches_target": true, "reason": "short explanation"}}"""
+
+    try:
+        raw_json = execute_llm_with_fallback(
+            messages=[{"role": "user", "content": prompt}],
+            primary_model=get_fast_llm_model(),
+            fallback_model=get_llm_model(),
+            temperature=0.0,
+            max_tokens=256,
+        )
+        data = parse_llm_json(raw_json)
+        is_rel = data.get("relevant", True) and data.get("matches_target", True)
+        return is_rel, target_competency
+    except Exception:
+        # Fallback to True if classification call fails
+        return True, target_competency
 
 
 def _generate_mcqs_from_chunk(
@@ -153,9 +224,6 @@ def _generate_mcqs_from_chunk(
     difficulty_mix: str,
 ) -> list[MCQQuestion]:
     """Call LLM to generate MCQs from a single text chunk."""
-    client = get_llm_client()
-    model = get_llm_model()
-
     user_message = f"""Generate {num_questions} MCQ(s) from the following source text.
 Competency area: {competency_code}
 Difficulty: {difficulty_mix}
@@ -168,19 +236,18 @@ SOURCE TEXT:
 Remember: ONLY use information from the above source text."""
 
     try:
-        response = client.chat.completions.create(
-            model=model,
+        raw_json = execute_llm_with_fallback(
             messages=[
                 {"role": "system", "content": MCQ_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
-            temperature=0.3,    # slight randomness for question variety
+            primary_model=get_fast_llm_model(),
+            fallback_model=get_llm_model(),
+            temperature=0.3,
             max_tokens=2048,
         )
     except Exception as e:
         raise RuntimeError(f"LLM call failed during MCQ generation: {e}") from e
-
-    raw_json = response.choices[0].message.content or '{"questions":[]}'
 
     try:
         data = json.loads(raw_json)
@@ -190,6 +257,9 @@ Remember: ONLY use information from the above source text."""
             data = json.loads(match.group())
         else:
             return []
+
+    if data.get("skip") is True:
+        return []
 
     questions = []
     for q in data.get("questions", []):
@@ -202,12 +272,20 @@ Remember: ONLY use information from the above source text."""
         if len(q["options"]) != 4:
             continue   # must have exactly 4 options
 
+        raw_diff = str(q.get("difficulty", "medium")).lower()
+        if raw_diff in ("difficult", "hots"):
+            diff = "hard"
+        elif raw_diff in ("easy", "medium"):
+            diff = raw_diff
+        else:
+            diff = "medium"
+
         questions.append(MCQQuestion(
             question_text=q["question_text"],
             options=[MCQOption(id=o["id"], text=o["text"]) for o in q["options"]],
             correct_option_id=q["correct_option_id"],
             explanation=q.get("explanation", ""),
-            difficulty=q.get("difficulty", "medium"),
+            difficulty=diff,
             source_excerpt_ref=chunk_ref,
             competency_code=competency_code,
             source_chunk=chunk_text[:300],   # store first 300 chars of source
@@ -222,17 +300,17 @@ def generate_mcqs(
     filepath: str,
     competency_code: str,
     total_questions: int = 10,
-    difficulty_mix: str = "mix of easy, medium, and difficult",
+    difficulty_mix: str = "mix of easy, medium, and hard",
     max_chunks: int = 5,
 ) -> list[MCQQuestion]:
     """
-    Full pipeline: file → text chunks → MCQs.
+    Full pipeline: file → text chunks → classification → MCQs.
 
     Args:
-        filepath: Path to uploaded PDF/DOCX/TXT
+        filepath: Path to uploaded PDF/DOCX/PPTX/TXT
         competency_code: e.g. 'OS-02' (Sampling Methodology)
         total_questions: total MCQs to generate
-        difficulty_mix: description passed to LLM (e.g., "3 easy, 4 medium, 3 difficult")
+        difficulty_mix: description passed to LLM (e.g., "3 easy, 4 medium, 3 hard")
         max_chunks: maximum text chunks to process (to control cost)
 
     Returns:
@@ -254,6 +332,11 @@ def generate_mcqs(
     for i, (chunk_num, chunk_text) in enumerate(chunks):
         if len(all_questions) >= total_questions:
             break
+
+        # Classification check: Skip chunk if it does not relate to target competency
+        is_rel, _ = classify_chunk_competency(chunk_text, competency_code)
+        if not is_rel:
+            continue
 
         n_to_gen = qs_per_chunk + (1 if i < remainder else 0)
         chunk_ref = f"Chunk {chunk_num}"
@@ -360,9 +443,6 @@ def generate_diagnostic_quiz(
     profile_text: str = "",
 ) -> list[dict]:
     """Generate 5 dynamic diagnostic MCQs based on user role, department, designation, and profile text."""
-    client = get_llm_client()
-    model = get_llm_model()
-
     user_context = (
         f"Role Code: {role_code}\n"
         f"Department: {department}\n"
@@ -371,16 +451,16 @@ def generate_diagnostic_quiz(
     )
 
     try:
-        response = client.chat.completions.create(
-            model=model,
+        raw_json = execute_llm_with_fallback(
             messages=[
                 {"role": "system", "content": DIAGNOSTIC_QUIZ_SYSTEM_PROMPT},
                 {"role": "user", "content": f"Generate 5 diagnostic questions for this official:\n\n{user_context}"},
             ],
+            primary_model=get_fast_llm_model(),
+            fallback_model=get_llm_model(),
             temperature=0.3,
-            max_tokens=2048,
+            max_tokens=1024,
         )
-        raw_json = response.choices[0].message.content or "{}"
     except Exception as e:
         print("Diagnostic MCQ generation error:", e)
         return []

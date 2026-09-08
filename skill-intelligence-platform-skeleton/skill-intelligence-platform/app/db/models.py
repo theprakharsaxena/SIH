@@ -278,6 +278,8 @@ class Assessment(Base):
     official_id: Mapped[str] = mapped_column(ForeignKey("officials.id", ondelete="CASCADE"), nullable=False)
     competency_id: Mapped[str] = mapped_column(ForeignKey("competencies.id"), nullable=False)
     source_material_id: Mapped[Optional[str]] = mapped_column(ForeignKey("uploaded_materials.id"))
+    course_id: Mapped[Optional[str]] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"))
+    context: Mapped[str] = mapped_column(String, default="standalone_upload")   # 'pre_assessment' | 'post_course' | 'standalone_upload'
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     official: Mapped["Official"] = relationship(back_populates="assessments")

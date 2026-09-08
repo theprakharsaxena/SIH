@@ -92,6 +92,8 @@ def get_llm_client():
     raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER!r}. Use 'novita', 'openai', or 'google'.")
 
 
+FAST_LLM_MODEL     = os.getenv("FAST_LLM_MODEL", "meta-llama/llama-3.3-70b-instruct")
+
 def get_llm_model() -> str:
     """Returns the correct model name for the current provider."""
     if LLM_PROVIDER == "novita":
@@ -99,6 +101,66 @@ def get_llm_model() -> str:
     if LLM_PROVIDER == "openai":
         return OPENAI_MODEL
     raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}")
+
+
+def get_fast_llm_model() -> str:
+    """Returns high-precision, high-speed model for accurate CV profile extraction."""
+    if LLM_PROVIDER == "novita":
+        return FAST_LLM_MODEL
+    if LLM_PROVIDER == "openai":
+        return "gpt-4o-mini"
+    return get_llm_model()
+
+
+def execute_llm_with_fallback(
+    messages: list[dict],
+    primary_model: str = None,
+    fallback_model: str = None,
+    temperature: float = 0.0,
+    max_tokens: int = 1536,
+) -> str:
+    """
+    Executes an LLM chat completion with an automatic fallback mechanism.
+    If the primary model call fails (e.g. server overload 503/429/timeout)
+    or returns empty content, it automatically retries using the fallback model.
+    """
+    client = get_llm_client()
+    if not primary_model:
+        primary_model = get_fast_llm_model()
+    if not fallback_model:
+        fallback_model = NOVITA_MODEL if LLM_PROVIDER == "novita" else OPENAI_MODEL
+
+    try:
+        response = client.chat.completions.create(
+            model=primary_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        content = (response.choices[0].message.content or "").strip()
+        if content:
+            return content
+        print(f"[LLM WARNING] Primary model '{primary_model}' returned empty content. Retrying with fallback...")
+    except Exception as err:
+        print(f"[LLM ERROR] Primary model '{primary_model}' failed: {err}. Retrying with fallback model '{fallback_model}'...")
+
+    # Retry with fallback model if primary model failed or returned empty content
+    if primary_model != fallback_model:
+        try:
+            response = client.chat.completions.create(
+                model=fallback_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            content = (response.choices[0].message.content or "").strip()
+            if content:
+                return content
+        except Exception as fallback_err:
+            print(f"[LLM ERROR] Fallback model '{fallback_model}' also failed: {fallback_err}")
+            raise RuntimeError(f"Primary model '{primary_model}' and fallback model '{fallback_model}' both failed.") from fallback_err
+
+    return ""
 
 
 def get_embedding_model() -> str:

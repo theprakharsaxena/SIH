@@ -10,7 +10,7 @@ RULE: This module extracts RAW FACTS only.
 """
 import json
 import re
-from app.config import get_llm_client, get_llm_model
+from app.config import get_llm_client, get_llm_model, get_fast_llm_model, execute_llm_with_fallback
 from app.domain.models import (
     OfficerProfile,
     AssessmentEvidence,
@@ -115,7 +115,7 @@ def extract_profile(
     profile_text: str,
 ) -> OfficerProfile:
     """
-    Extract structured evidence from free-text officer profile.
+    Extract structured evidence from free-text officer profile with automatic model fallback.
 
     Args:
         officer_id: ID of the officer (for the returned OfficerProfile)
@@ -125,23 +125,22 @@ def extract_profile(
     Returns:
         OfficerProfile with all evidence lists populated from the LLM extraction.
     """
-    client = get_llm_client()
-    model = get_llm_model()
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Extract evidence from this officer profile:\n\n{profile_text}"},
+    ]
 
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Extract evidence from this officer profile:\n\n{profile_text}"},
-            ],
-            temperature=0.0,    # deterministic output — we need consistent JSON
-            max_tokens=2048,
+        raw_json = execute_llm_with_fallback(
+            messages=messages,
+            primary_model=get_fast_llm_model(),
+            fallback_model=get_llm_model(),
+            temperature=0.0,
+            max_tokens=1536,
         )
     except Exception as e:
-        raise RuntimeError(f"LLM call failed: {e}") from e
+        raise RuntimeError(f"LLM extraction failed on primary & fallback models: {e}") from e
 
-    raw_json = response.choices[0].message.content or "{}"
     data = parse_llm_json(raw_json)
 
     return _build_profile(officer_id, role_code, data)

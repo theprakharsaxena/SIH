@@ -155,12 +155,25 @@ def submit_quiz_and_update_competency(
         official_id=officer_id,
         competency_id=assessment.competency_id,
         evidence_type="assessment",
-        raw_fact={"test_percent": score_percent, "assessment_id": assessment_id},
+        raw_fact={"test_percent": score_percent, "assessment_id": assessment_id, "context": assessment.context},
         raw_score=raw_score,
         weight_applied=WEIGHT_ASSESSMENT,
         extracted_by="assessment_engine",
         source_reference=f"Assessment {assessment_id}",
     ))
+
+    # IF context == 'post_course' (or course quiz) AND score_percent >= 60.0, ALSO write a prior_training evidence row
+    if getattr(assessment, "context", "standalone_upload") == "post_course" and score_percent >= 60.0:
+        db.add(CompetencyEvidence(
+            official_id=officer_id,
+            competency_id=assessment.competency_id,
+            evidence_type="prior_training",
+            raw_fact={"course_completed": True, "score_percent": score_percent, "course_id": getattr(assessment, "course_id", None)},
+            raw_score=4.0,  # Credit for course completion
+            weight_applied=0.20,
+            extracted_by="course_completion_policy",
+            source_reference=f"Course Completion Assessment {assessment_id}",
+        ))
 
     # Recompute total score from ALL evidence for this competency
     all_evidence = db.query(CompetencyEvidence).filter_by(
@@ -257,6 +270,18 @@ def record_course_quiz_result(
         extracted_by="learning_path_assessment",
         source_reference=f"Course Assessment {comp.code}",
     ))
+
+    if score_percent >= 60.0:
+        db.add(CompetencyEvidence(
+            official_id=officer_id,
+            competency_id=comp.id,
+            evidence_type="prior_training",
+            raw_fact={"course_completed": True, "score_percent": score_percent},
+            raw_score=4.0,
+            weight_applied=0.20,
+            extracted_by="course_completion_policy",
+            source_reference=f"Course Completion {comp.code}",
+        ))
 
     # Recompute score from all evidence
     all_ev = db.query(CompetencyEvidence).filter_by(official_id=officer_id, competency_id=comp.id).all()

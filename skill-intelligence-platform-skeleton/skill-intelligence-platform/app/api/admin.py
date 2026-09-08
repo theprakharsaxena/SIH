@@ -55,6 +55,34 @@ def list_officers_admin(
     return {"total": total, "officers": result}
 
 
+@router.delete("/officers/{officer_id}")
+def delete_officer_admin(officer_id: str, db: Session = Depends(get_db)):
+    """
+    Delete a learner / official record and all associated records.
+    """
+    from fastapi import HTTPException
+    official = db.query(Official).filter_by(id=officer_id).first()
+    if not official:
+        raise HTTPException(status_code=404, detail="Officer not found")
+
+    from app.db.models import (
+        CompetencyScore, CompetencyEvidence, Enrollment,
+        AssessmentResult, Recommendation, Assessment
+    )
+    # Clean up dependent records
+    db.query(CompetencyScore).filter_by(official_id=officer_id).delete()
+    db.query(CompetencyEvidence).filter_by(official_id=officer_id).delete()
+    db.query(Enrollment).filter_by(official_id=officer_id).delete()
+    db.query(AssessmentResult).filter_by(official_id=officer_id).delete()
+    db.query(Recommendation).filter_by(official_id=officer_id).delete()
+    db.query(Assessment).filter_by(official_id=officer_id).delete()
+
+    db.delete(official)
+    db.commit()
+
+    return {"message": f"Officer '{official.full_name}' deleted successfully.", "id": officer_id}
+
+
 @router.get("/assessment-results")
 def list_assessment_results(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     """Paginated list of all assessment results for admin analytics."""

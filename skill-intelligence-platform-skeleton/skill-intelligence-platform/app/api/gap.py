@@ -66,6 +66,46 @@ def compute_gap_analysis(
             .all()
         )
 
+        if not scores_in_db:
+            # Auto-initialize baseline competency scores if none exist in DB yet
+            baseline_defaults = {
+                "JSO": {
+                    "OS-01": 1.5, "OS-02": 1.0, "OS-10": 2.0,
+                    "TC-01": 0.5, "TC-03": 1.2, "BM-02": 2.5, "TC-02": 2.0,
+                    "OS-03": 1.0, "OS-08": 1.5, "DG-01": 1.0, "DG-02": 1.8
+                },
+                "SSO": {
+                    "OS-03": 2.2, "DG-02": 2.5, "TC-07": 1.5,
+                    "TC-01": 2.0, "TC-08": 2.8, "BM-01": 2.0, "OS-01": 2.8, "OS-02": 2.5
+                },
+                "MCTP-II": {
+                    "BM-05": 3.0, "DG-05": 2.8, "BM-02": 3.5,
+                    "TC-10": 2.5, "BM-06": 2.8, "OS-03": 3.2
+                },
+                "MCTP-III": {
+                    "OS-11": 3.5, "TC-09": 3.0, "BM-03": 4.0,
+                    "DG-01": 3.8, "BM-04": 4.2, "OS-01": 4.5
+                }
+            }
+            role_defaults = baseline_defaults.get(role_code, baseline_defaults["JSO"])
+            all_comps = db.query(Competency).all()
+            for comp in all_comps:
+                score_val = role_defaults.get(comp.code, 1.2)
+                cs = CompetencyScore(
+                    official_id=officer_id,
+                    competency_id=comp.id,
+                    current_score=score_val,
+                )
+                db.add(cs)
+            db.commit()
+
+            scores_in_db = (
+                db.query(CompetencyScore, Competency)
+                .join(Competency, CompetencyScore.competency_id == Competency.id)
+                .filter(CompetencyScore.official_id == officer_id)
+                .all()
+            )
+
         scores_dict: dict[str, CompetencyScoreBreakdown] = {}
         for sc, comp in scores_in_db:
             scores_dict[comp.code] = CompetencyScoreBreakdown(

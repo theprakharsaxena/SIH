@@ -143,6 +143,11 @@ export const fetchAdminOfficers = async (skip = 0, limit = 50) => {
   return res.data;
 };
 
+export const deleteAdminOfficer = async (officerId) => {
+  const res = await api.delete(`/admin/officers/${officerId}`);
+  return res.data;
+};
+
 export const fetchAssessmentResults = async (skip = 0, limit = 50) => {
   const res = await api.get(`/admin/assessment-results?skip=${skip}&limit=${limit}`);
   return res.data;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, ChevronUp, ChevronDown, Loader, Shield } from 'lucide-react';
-import { fetchAdminOfficers } from '../../services/api';
+import { Search, Users, ChevronUp, ChevronDown, Loader, Shield, Trash2, AlertTriangle } from 'lucide-react';
+import { fetchAdminOfficers, deleteAdminOfficer } from '../../services/api';
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
@@ -11,6 +11,9 @@ export default function OfficersPage() {
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState('full_name');
   const [sortDir, setSortDir] = useState('asc');
+  const [deletingId, setDeletingId] = useState(null);
+  const [officerToDelete, setOfficerToDelete] = useState(null);
+  const [statusMsg, setStatusMsg] = useState(null);
 
   useEffect(() => {
     fetchAdminOfficers(0, 100)
@@ -18,6 +21,27 @@ export default function OfficersPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (!officerToDelete) return;
+    const target = officerToDelete;
+    setDeletingId(target.id);
+    setStatusMsg(null);
+    try {
+      await deleteAdminOfficer(target.id);
+      setData(prev => ({
+        total: Math.max(0, prev.total - 1),
+        officers: prev.officers.filter(o => o.id !== target.id),
+      }));
+      setStatusMsg({ type: 'success', text: `Officer "${target.full_name}" has been deleted successfully.` });
+    } catch (err) {
+      console.error(err);
+      setStatusMsg({ type: 'error', text: err?.response?.data?.detail || 'Failed to delete officer. Please try again.' });
+    } finally {
+      setDeletingId(null);
+      setOfficerToDelete(null);
+    }
+  };
 
   const toggleSort = (field) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -56,7 +80,7 @@ export default function OfficersPage() {
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: NAVY, fontSize: '1.4rem', marginBottom: '0.3rem' }}>
-            All Officers
+            All Officers & Learners
           </h1>
           <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
             {data.total} officers registered · Showing {filtered.length}
@@ -71,6 +95,63 @@ export default function OfficersPage() {
           />
         </div>
       </div>
+
+      {statusMsg && (
+        <div style={{
+          background: statusMsg.type === 'success' ? '#f0fdf4' : '#fef2f2',
+          border: `1px solid ${statusMsg.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+          borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem',
+          color: statusMsg.type === 'success' ? '#166534' : '#dc2626', fontSize: '0.875rem', fontWeight: 600
+        }}>
+          {statusMsg.text}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {officerToDelete && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '1.75rem', width: '100%', maxWidth: '440px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: '#dc2626' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <AlertTriangle size={20} color="#dc2626" />
+              </div>
+              <div>
+                <h3 style={{ fontWeight: 800, color: NAVY, margin: 0, fontSize: '1.1rem' }}>Delete Learner Account?</h3>
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>This action is permanent and cannot be undone.</span>
+              </div>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#334155' }}>
+              <div><strong>Name:</strong> {officerToDelete.full_name}</div>
+              <div><strong>Email:</strong> {officerToDelete.email}</div>
+              <div><strong>Role:</strong> {officerToDelete.role_code || 'N/A'}</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                onClick={() => setOfficerToDelete(null)}
+                style={{ padding: '0.6rem 1.1rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', color: '#475569' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deletingId === officerToDelete.id}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#dc2626', color: 'white', fontWeight: 700, fontSize: '0.85rem', cursor: deletingId ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                {deletingId ? <><Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Deleting…</> : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         {loading ? (
@@ -98,6 +179,7 @@ export default function OfficersPage() {
                       </div>
                     </th>
                   ))}
+                  <th style={{ ...thStyle, cursor: 'default', textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,6 +229,22 @@ export default function OfficersPage() {
                         ) : (
                           <span style={{ fontSize: '0.72rem', color: '#6b7280' }}>Officer</span>
                         )}
+                      </td>
+                      <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
+                        <button
+                          onClick={() => setOfficerToDelete(off)}
+                          title="Delete learner account"
+                          style={{
+                            background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626',
+                            borderRadius: '8px', padding: '0.4rem 0.65rem', fontSize: '0.75rem', fontWeight: 700,
+                            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.color = 'white'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#dc2626'; }}
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
                       </td>
                     </tr>
                   );

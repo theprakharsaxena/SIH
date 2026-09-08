@@ -296,7 +296,7 @@ export default function LandingPage() {
         </div>
         Ministry of Statistics & Programme Implementation • Government of India • SIH 2026 — Problem Statement 26101
         <br />
-        Integrated with iGOT Karmayogi Ecosystem • NSSTA Training Calendar • Powered by Novita AI (DeepSeek)
+        Integrated with iGOT Karmayogi Ecosystem • NSSTA Training Calendar • Powered by Enterprise AI Engine
       </footer>
     </div>
   );

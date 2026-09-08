@@ -46,7 +46,7 @@ export default function AssessmentPage({ selectedOfficer, onQuizCompleted, onGoB
         {[
           { step: '1', title: 'Pick Competency', desc: 'Select the domain to be assessed', bg: '#eef2fb' },
           { step: '2', title: 'Upload Material', desc: 'PDF, DOCX, or TXT learning resource', bg: '#fff7ed' },
-          { step: '3', title: 'AI Generates MCQs', desc: 'DeepSeek reads and creates 5 questions', bg: '#f0fdf4' },
+          { step: '3', title: 'AI Generates MCQs', desc: 'AI engine reads and creates 5 questions', bg: '#f0fdf4' },
           { step: '4', title: 'Score Updates Live', desc: 'Your competency score closes the loop', bg: '#fdf4ff' },
         ].map((s, i) => (
           <div key={i} style={{ flex: 1, padding: '1rem 1.25rem', background: s.bg, borderRight: i < 3 ? '1px solid #e5e7eb' : 'none' }}>

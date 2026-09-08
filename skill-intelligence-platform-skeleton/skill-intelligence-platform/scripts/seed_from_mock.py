@@ -123,7 +123,7 @@ def seed_officials(db: Session, code_to_role: dict):
         
         role_id = code_to_role.get(u["role_code"])
         official.full_name = u["full_name"]
-        official.hashed_password = pwd_context.hash(u["password"])
+        official.hashed_password = pwd_context.hash(u["password"][:72])
         official.is_admin = u["is_admin"]
         official.role_id = role_id
         official.department = u.get("department")

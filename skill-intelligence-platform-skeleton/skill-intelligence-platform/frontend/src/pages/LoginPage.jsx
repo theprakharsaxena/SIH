@@ -192,6 +192,7 @@ export default function LoginPage() {
           <div style={{ marginTop: '2rem', padding: '1rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
             <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 600, marginBottom: '0.4rem' }}>DEMO ACCOUNTS</div>
             <div style={{ fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.6 }}>
+              <strong>Learner:</strong> rajesh.kumar@mospi.gov.in / secure456<br />
               <strong>Learner:</strong> anika.sharma@mospi.gov.in / password123<br />
               <strong>Admin:</strong> admin@mospi.gov.in / admin123
             </div>

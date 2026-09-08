@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: BrainCircuit,
     title: 'AI-Powered Gap Analysis',
-    desc: 'Our AI analyses your profile and maps it against 47 competencies defined in the NKM Framework, instantly identifying your skill gaps.',
+    desc: 'Our AI analyses your profile and maps it against 35 competencies defined in the NKM Framework, instantly identifying your skill gaps.',
     color: '#3b82f6',
   },
   {

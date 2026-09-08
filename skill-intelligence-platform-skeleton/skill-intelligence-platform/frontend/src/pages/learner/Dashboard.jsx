@@ -43,43 +43,82 @@ function CourseChip({ rec }) {
   );
 }
 
-function extractCompetencyList(gapData) {
+const ROLE_RELEVANT_COMPETENCIES = {
+  JSO: [
+    { code: 'OS-01', name: 'Survey Design' },
+    { code: 'OS-02', name: 'Sampling Methodology' },
+    { code: 'OS-10', name: 'Data Quality Frameworks' },
+    { code: 'TC-01', name: 'Python' },
+    { code: 'TC-03', name: 'SQL' },
+    { code: 'BM-02', name: 'Communication' },
+  ],
+  SSO: [
+    { code: 'OS-03', name: 'National Accounts (GDP)' },
+    { code: 'DG-02', name: 'Data Privacy' },
+    { code: 'TC-07', name: 'GIS' },
+    { code: 'TC-01', name: 'Python' },
+    { code: 'TC-08', name: 'Data Visualization' },
+    { code: 'BM-01', name: 'Leadership' },
+  ],
+  'MCTP-II': [
+    { code: 'BM-05', name: 'Decision Making' },
+    { code: 'DG-05', name: 'Digital Public Infrastructure' },
+    { code: 'BM-02', name: 'Communication' },
+    { code: 'TC-10', name: 'Cloud Computing' },
+    { code: 'BM-06', name: 'Change Management' },
+  ],
+  'MCTP-III': [
+    { code: 'OS-11', name: 'Time Series & Applied Econometrics' },
+    { code: 'TC-09', name: 'AI/ML' },
+    { code: 'BM-03', name: 'Project Management' },
+    { code: 'DG-01', name: 'Cybersecurity' },
+    { code: 'BM-04', name: 'Ethics' },
+  ],
+};
+
+function extractCompetencyList(gapData, roleCode = 'JSO') {
   if (!gapData) return [];
   const rawList = gapData.competencies || gapData.gaps || [];
 
-  return rawList
-    .filter(item => {
-      const required = item.required_score ?? item.required_level ?? 0;
-      const current = item.current_score ?? item.current_level ?? 0;
-      // Only include competencies that are required for this officer's role (> 0) or where score exists (> 0)
-      return required > 0 || current > 0;
-    })
-    .map(item => {
-      const code = item.competency_code || item.code || '';
-      const name = item.competency_name || item.name || code;
-      const current = item.current_score ?? item.current_level ?? 0;
-      const required = item.required_score ?? item.required_level ?? 5;
-      const gap = item.gap ?? Math.max(0, required - current);
+  const relevant = ROLE_RELEVANT_COMPETENCIES[roleCode] || ROLE_RELEVANT_COMPETENCIES['JSO'];
+  const relevantCodes = new Set(relevant.map(r => r.code));
+  const relevantNames = relevant.map(r => r.name.toLowerCase());
 
-      let severity = item.gap_severity || item.category || 'critical';
-      if (severity === 'category_c' || gap > 1.5) {
-        severity = 'critical';
-      } else if (severity === 'category_b' || (gap > 0 && gap <= 1.5)) {
-        severity = 'moderate';
-      } else if (severity === 'category_a' || gap <= 0) {
-        severity = 'proficient';
-      }
+  const filteredRaw = rawList.filter(item => {
+    const code = (item.competency_code || item.code || '').toUpperCase();
+    const name = (item.competency_name || item.name || '').toLowerCase();
+    if (relevantCodes.has(code)) return true;
+    return relevantNames.some(rn => name.includes(rn) || rn.includes(name));
+  });
 
-      return {
-        code,
-        competency_name: name,
-        domain_category: item.domain_category || item.category_name || (code.startsWith('OS') ? '📊 Official Statistics' : code.startsWith('TC') ? '💻 Technical & Computing' : code.startsWith('DG') ? '🏛️ Digital Governance' : '🤝 Behavioural & Managerial'),
-        current_level: current,
-        required_level: required,
-        gap,
-        gap_severity: severity,
-      };
-    });
+  const listToUse = filteredRaw.length > 0 ? filteredRaw : rawList.slice(0, 6);
+
+  return listToUse.map(item => {
+    const code = item.competency_code || item.code || '';
+    const name = item.competency_name || item.name || code;
+    const current = item.current_score ?? item.current_level ?? 0;
+    const required = item.required_score ?? item.required_level ?? 4;
+    const gap = item.gap ?? Math.max(0, required - current);
+
+    let severity = item.gap_severity || item.category || 'critical';
+    if (severity === 'category_c' || gap > 1.5) {
+      severity = 'critical';
+    } else if (severity === 'category_b' || (gap > 0 && gap <= 1.5)) {
+      severity = 'moderate';
+    } else if (severity === 'category_a' || gap <= 0) {
+      severity = 'proficient';
+    }
+
+    return {
+      code,
+      competency_name: name,
+      domain_category: item.domain_category || item.category_name || (code.startsWith('OS') ? '📊 Official Statistics' : code.startsWith('TC') ? '💻 Technical & Computing' : code.startsWith('DG') ? '🏛️ Digital Governance' : '🤝 Behavioural & Managerial'),
+      current_level: current,
+      required_level: required,
+      gap,
+      gap_severity: severity,
+    };
+  });
 }
 
 export default function LearnerDashboardPage() {
@@ -123,11 +162,16 @@ export default function LearnerDashboardPage() {
     finally { setUploading(false); }
   };
 
-  const overall = gapData?.overall_readiness_pct ?? 0;
-  const critical = gapData?.critical_gaps ?? 0;
-  const moderate = gapData?.slight_gaps ?? 0;
-  const proficient = gapData?.no_gaps ?? 0;
-  const comps = extractCompetencyList(gapData);
+  const roleCode = user?.role_code || gapData?.role_code || 'JSO';
+  const comps = extractCompetencyList(gapData, roleCode);
+
+  const critical = comps.filter(c => c.gap_severity === 'critical').length;
+  const moderate = comps.filter(c => c.gap_severity === 'moderate').length;
+  const proficient = comps.filter(c => c.gap_severity === 'proficient').length;
+
+  const totalRequired = comps.reduce((acc, c) => acc + (c.required_level || 0), 0);
+  const totalCurrent = comps.reduce((acc, c) => acc + (c.current_level || 0), 0);
+  const overall = totalRequired > 0 ? Math.min(100, Math.round((totalCurrent / totalRequired) * 100)) : 0;
 
   const filteredComps = comps.filter(c => {
     if (filterSev === 'critical' && c.gap_severity !== 'critical') return false;

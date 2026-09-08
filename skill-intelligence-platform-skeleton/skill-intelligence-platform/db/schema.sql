@@ -204,6 +204,8 @@ CREATE TABLE assessments (
     official_id         UUID NOT NULL REFERENCES officials(id) ON DELETE CASCADE,
     competency_id       UUID NOT NULL REFERENCES competencies(id),
     source_material_id  UUID REFERENCES uploaded_materials(id),
+    course_id           UUID REFERENCES courses(id) ON DELETE CASCADE,
+    context             VARCHAR DEFAULT 'standalone_upload',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

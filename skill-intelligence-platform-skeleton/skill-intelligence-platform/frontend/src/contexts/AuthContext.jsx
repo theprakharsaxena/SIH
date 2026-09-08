@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const API_BASE = 'https://mospi-api.duckdns.org';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
 
 export function AuthProvider({ children }) {
   const [user, setUser]     = useState(null);   // { id, full_name, email, role_code, is_admin, onboarding_complete, ... }

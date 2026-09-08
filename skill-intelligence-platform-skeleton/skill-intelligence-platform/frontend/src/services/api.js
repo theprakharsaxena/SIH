@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://mospi-api.duckdns.org';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://65.0.178.112';
 
 const api = axios.create({ baseURL: API_BASE_URL });
 

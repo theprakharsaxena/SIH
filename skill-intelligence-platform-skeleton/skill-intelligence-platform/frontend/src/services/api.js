@@ -1,11 +1,27 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
+let getBaseUrl = () => {
+  let url = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
+    url = url.replace('http:', 'https:');
+  }
+  return url;
+};
+
+const API_BASE_URL = getBaseUrl();
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
-/* ── Inject JWT token on every request ── */
+/* ── Inject JWT token on every request & enforce HTTPS ── */
 api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (config.baseURL && config.baseURL.startsWith('http:')) {
+      config.baseURL = config.baseURL.replace('http:', 'https:');
+    }
+    if (config.url && config.url.startsWith('http:')) {
+      config.url = config.url.replace('http:', 'https:');
+    }
+  }
   const token = localStorage.getItem('sip_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -18,7 +34,8 @@ export const loginUser = async (email, password) => {
   const form = new URLSearchParams();
   form.append('username', email);
   form.append('password', password);
-  const res = await axios.post(`${API_BASE_URL}/auth/login`, form, {
+  const baseUrl = getBaseUrl();
+  const res = await axios.post(`${baseUrl}/auth/login`, form, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
   return res.data;

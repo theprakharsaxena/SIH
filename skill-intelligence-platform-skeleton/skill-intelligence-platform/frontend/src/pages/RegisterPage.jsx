@@ -8,10 +8,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import api, { fetchDiagnosticQuiz } from '../services/api';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Point pdfjs worker to CDN (avoids bundling the heavy worker)
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Set pdfjs worker URL cleanly via Vite worker import fallback
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker ||
+  `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';
@@ -326,8 +327,8 @@ function InfoBox({ children, color = '#eff6ff', border = '#bfdbfe', text = '#1e4
   );
 }
 
-/* ─── Role & Ministry Profile Alignment Validation ─────────────────────── */
-function checkProfileAlignment(s1, text, extractedData) {
+/* ─── Offline Fallback Profile Alignment Validation ─────────────────────── */
+function checkProfileAlignmentFallback(s1, text) {
   if (!text || text.trim().length < 15) return null;
 
   const t = text.toLowerCase();
@@ -478,14 +479,18 @@ export default function RegisterPage() {
         fullText += content.items.map(item => item.str).join(' ') + '\n';
       }
       const trimmed = fullText.trim();
+      if (!trimmed) {
+        throw new Error('No readable text found in PDF');
+      }
       setProfileText(trimmed);
-      const warn = checkProfileAlignment(s1, trimmed, null);
-      setAlignmentWarning(warn);
+      setExtracted(null);
+      setAlignmentWarning(null);
       setAcknowledgedWarning(false);
-    } catch {
+    } catch (err) {
+      console.error('PDF parsing error:', err);
       setProfileText('');
       setPdfFile(null);
-      alert('Could not read the PDF. Please paste your background text manually.');
+      alert(`Could not read the PDF (${err?.message || 'Error parsing file'}). Please paste your background text manually.`);
     } finally {
       setPdfParsing(false);
       // reset input so same file can be re-uploaded
@@ -613,22 +618,31 @@ export default function RegisterPage() {
     if (!profileText.trim()) { setError('Please paste your background text first.'); return; }
     setExtracting(true);
     setError('');
-
-    // Pre-evaluate profile alignment with role & department
-    const warn = checkProfileAlignment(s1, profileText, null);
-    setAlignmentWarning(warn);
+    setAlignmentWarning(null);
     setAcknowledgedWarning(false);
 
     try {
       const res = await api.post('/officers/extract-profile', {
         role_code: s1.role || 'SSO',
+        department: s1.department || '',
+        designation: s1.designation || '',
         profile_text: profileText,
       });
       const d = res.data;
       setExtracted(d);
-      
-      const finalWarn = checkProfileAlignment(s1, profileText, d);
-      setAlignmentWarning(finalWarn);
+
+      // Primary AI Alignment Evaluation check
+      if (d.alignment_warning) {
+        setAlignmentWarning(d.alignment_warning);
+      } else if (d.is_aligned === false) {
+        setAlignmentWarning({
+          title: 'AI Alignment Warning',
+          message: `AI evaluated that your background details do not match your selected role (${s1.role || 'Officer'}) and department (${s1.department || 'MoSPI'}).`,
+          reason: `No official statistics, survey operations, or relevant administrative experience was found for ${s1.department || 'MoSPI'}.`,
+        });
+      } else {
+        setAlignmentWarning(null);
+      }
 
       const fmtExp = (e) => {
         if (e.raw_text || e.description) return e.raw_text || e.description;
@@ -672,6 +686,13 @@ export default function RegisterPage() {
         || err?.response?.data
         || err?.message
         || 'Unknown error';
+
+      // Fallback: If AI extraction API fails, run offline heuristic alignment check
+      const fallbackWarn = checkProfileAlignmentFallback(s1, profileText);
+      if (fallbackWarn) {
+        setAlignmentWarning(fallbackWarn);
+      }
+
       setError(`AI extraction failed: ${msg}. You can manually type your key facts below.`);
       setExtracted({ experiences: [], trainings: [], education: [] });
       setExtractedEditable({ experiences: '', trainings: '', education: '' });
@@ -901,60 +922,26 @@ Self-Assessment Average: ${selfAvg}/5
               </div>
             </div>
 
-            {/* Extracted facts — shown after AI runs */}
-            {extracted && (
-              <div style={{ border: '1.5px solid #bbf7d0', borderRadius: '12px', padding: '1.25rem', background: '#f0fdf4' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: GREEN, marginBottom: '1rem', fontSize: '0.875rem' }}>
-                  <CheckCircle size={16} /> AI extracted the following facts — <span style={{ fontWeight: 400, color: '#374151' }}>review and correct if needed</span>
-                  <AIBadge text="AI extracted" />
-                </div>
-
-                {[
-                  { key: 'experiences', label: '💼 Work Experience' },
-                  { key: 'trainings',   label: '📚 Prior Training' },
-                  { key: 'education',   label: '🎓 Education' },
-                ].map(({ key, label }) => (
-                  <div key={key} style={{ marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.8rem', color: NAVY, marginBottom: '0.3rem' }}>
-                      <Edit3 size={12} /> {label}
-                    </div>
-                    <textarea
-                      value={extractedEditable[key]}
-                      onChange={e => setExtractedEditable(p => ({ ...p, [key]: e.target.value }))}
-                      rows={2}
-                      placeholder={`No ${key} found — type here to add…`}
-                      style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
-                    />
-                  </div>
-                ))}
-
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                  ✏️ These facts are used to compute your competency scores. Corrections here update your profile.
-                </div>
-              </div>
-            )}
-
-            {/* Profile Alignment Warning Banner */}
-            {alignmentWarning && !acknowledgedWarning && (
+            {/* Profile Alignment Warning Banner — Rendered FIRST when alignment warning exists */}
+            {alignmentWarning && (
               <div style={{
                 background: '#fff7ed',
-                border: '2px solid #fdba74',
+                border: '2px solid #f97316',
                 borderRadius: '12px',
                 padding: '1.25rem',
-                marginTop: '0.5rem',
-                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.1)'
+                boxShadow: '0 4px 14px rgba(249, 115, 22, 0.12)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <AlertCircle size={24} color="#ea580c" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <AlertCircle size={26} color="#ea580c" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: '#9a3412', fontSize: '0.95rem', marginBottom: '0.35rem' }}>
-                      ⚠️ {alignmentWarning.title}
+                    <div style={{ fontWeight: 800, color: '#9a3412', fontSize: '0.95rem', marginBottom: '0.35rem' }}>
+                      ⚠️ {alignmentWarning.title || 'Domain & Role Mismatch Detected'}
                     </div>
                     <div style={{ fontSize: '0.84rem', color: '#7c2d12', lineHeight: 1.5, marginBottom: '0.6rem' }}>
                       {alignmentWarning.message}
                     </div>
-                    <div style={{ background: '#ffedd5', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #fed7aa', fontSize: '0.78rem', color: '#9a3412', marginBottom: '0.85rem', lineHeight: 1.5 }}>
-                      📌 <strong>Reason:</strong> {alignmentWarning.reason}
+                    <div style={{ background: '#ffedd5', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #fed7aa', fontSize: '0.78rem', color: '#9a3412', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+                      📌 <strong>Reason for Mismatch:</strong> {alignmentWarning.reason}
                     </div>
                     <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button
@@ -980,6 +967,7 @@ Self-Assessment Average: ${selfAvg}/5
                           setExtracted(null);
                           setPdfFile(null);
                           setAlignmentWarning(null);
+                          setAcknowledgedWarning(false);
                           if (pdfInputRef.current) pdfInputRef.current.value = '';
                         }}
                         style={{
@@ -993,25 +981,71 @@ Self-Assessment Average: ${selfAvg}/5
                           cursor: 'pointer'
                         }}
                       >
-                        📄 Clear & Paste Relevant CV
+                        📄 Clear & Upload Matching CV
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setAcknowledgedWarning(true)}
-                        style={{
-                          background: 'transparent',
-                          color: '#6b7280',
-                          border: 'none',
-                          padding: '0.45rem 0.5rem',
-                          fontSize: '0.76rem',
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        Proceed Anyway (Career Transition)
-                      </button>
+                      {!acknowledgedWarning && (
+                        <button
+                          type="button"
+                          onClick={() => setAcknowledgedWarning(true)}
+                          style={{
+                            background: '#fef3c7',
+                            color: '#92400e',
+                            border: '1px solid #fde68a',
+                            borderRadius: '6px',
+                            padding: '0.45rem 0.85rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Proceed Anyway & Type Facts Below
+                        </button>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Extracted facts — shown after AI runs */}
+            {extracted && (
+              <div style={{
+                border: `1.5px solid ${alignmentWarning ? '#fcd34d' : '#bbf7d0'}`,
+                borderRadius: '12px',
+                padding: '1.25rem',
+                background: alignmentWarning ? '#fffbeb' : '#f0fdf4'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, color: alignmentWarning ? '#b45309' : GREEN, marginBottom: '1rem', fontSize: '0.875rem' }}>
+                  {alignmentWarning ? <AlertCircle size={16} /> : <CheckCircle size={16} />}
+                  {alignmentWarning ? (
+                    <span>AI Evaluation: <strong style={{ color: '#92400e' }}>Zero matching facts extracted due to role mismatch</strong></span>
+                  ) : (
+                    <span>AI extracted the following facts — <span style={{ fontWeight: 400, color: '#374151' }}>review and correct if needed</span></span>
+                  )}
+                  <AIBadge text={alignmentWarning ? "Mismatch Flagged" : "AI extracted"} />
+                </div>
+
+                {[
+                  { key: 'experiences', label: '💼 Work Experience' },
+                  { key: 'trainings',   label: '📚 Prior Training' },
+                  { key: 'education',   label: '🎓 Education' },
+                ].map(({ key, label }) => (
+                  <div key={key} style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.8rem', color: NAVY, marginBottom: '0.3rem' }}>
+                      <Edit3 size={12} /> {label}
+                    </div>
+                    <textarea
+                      value={extractedEditable[key]}
+                      onChange={e => setExtractedEditable(p => ({ ...p, [key]: e.target.value }))}
+                      rows={2}
+                      placeholder={`No ${key} found — type here to add…`}
+                      style={{ width: '100%', padding: '0.6rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
+                    />
+                  </div>
+                ))}
+
+                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                  ✏️ These facts are used to compute your competency scores. Corrections here update your profile.
                 </div>
               </div>
             )}

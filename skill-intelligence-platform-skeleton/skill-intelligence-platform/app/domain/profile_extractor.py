@@ -22,18 +22,20 @@ from app.domain.models import (
 
 # ─── System prompt ────────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are an evidence extraction assistant for India's Official Statistical System workforce platform.
+SYSTEM_PROMPT = """You are an evidence extraction & alignment assistant for India's Official Statistical System workforce platform.
 
-Your job: Extract structured evidence from an officer's profile text and return ONLY valid JSON.
+Your job: Extract structured evidence from an officer's profile text AND evaluate alignment with their target role/department. Return ONLY valid JSON.
 
-EXTRACTION RULES:
+EXTRACTION & ALIGNMENT RULES:
 1. Extract only what is explicitly stated. Do NOT infer or guess.
 2. For experience relevance: 'direct' = same competency area, 'adjacent' = related area, 'tangential' = loosely related, 'unrelated' = no connection.
-3. For education: Only extract if the degree is mentioned. Assign education_score: 1=unrelated, 2=unrelated+relevant coursework, 3=adjacent field bachelor's, 4=direct field bachelor's, 5=direct field master's/PhD.
+3. For education: Only extract if degree is mentioned. Assign education_score: 1=unrelated, 2=unrelated+relevant coursework, 3=adjacent field bachelor's, 4=direct field bachelor's, 5=direct field master's/PhD.
 4. For training: Extract completed courses/trainings only. level must be 'none'|'beginner'|'intermediate'|'advanced'.
-5. For self_report: Only extract if the officer explicitly states their skill level (e.g., "proficient in Python", "3/5 in sampling").
-6. Competency codes: Use ONLY these codes — OS-01 through OS-12 (Statistical), TC-01 through TC-12 (Technical), DG-01 through DG-05 (Digital Governance), BM-01 through BM-06 (Behavioural).
-7. If you are unsure about a competency code, use the closest match or skip it.
+5. For self_report: Only extract if officer explicitly states skill level.
+6. Competency codes: Use ONLY OS-01 to OS-12, TC-01 to TC-12, DG-01 to DG-05, BM-01 to BM-06.
+7. ALIGNMENT CHECK: Check if the CV text aligns with the officer's target role/department.
+   - If there is a major domain mismatch (e.g. medical doctor, surgery, mechanical engineering/welding, culinary chef, fashion actor, or student intern applying for senior director), set "is_aligned": false, and provide "alignment_warning": {"title": "Domain & Role Mismatch Detected", "message": "The uploaded background focuses on an unrelated field which does not align with your target role.", "reason": "No official statistics, survey methodology, government data analysis, or relevant admin background was found."}.
+   - Otherwise, set "is_aligned": true and "alignment_warning": null.
 
 COMPETENCY CODE REFERENCE:
 Statistical: OS-01=Survey Design, OS-02=Sampling Methodology, OS-03=National Accounts(GDP), OS-04=Price Statistics, OS-05=Labour Statistics, OS-06=Agricultural Statistics, OS-07=Industrial Statistics, OS-08=SDG Indicators, OS-09=Metadata Standards, OS-10=Data Quality Frameworks, OS-11=Time Series & Econometrics, OS-12=Financial Statistics
@@ -43,21 +45,13 @@ Behavioural: BM-01=Leadership, BM-02=Communication, BM-03=Project Management, BM
 
 OUTPUT FORMAT (return ONLY this JSON, no explanation, no markdown):
 {
-  "assessments": [
-    {"competency_code": "TC-01", "test_percent": 68.0, "source_reference": "Python test, 2023"}
-  ],
-  "experiences": [
-    {"competency_code": "OS-02", "years": 4.0, "relevance": "direct", "source_reference": "Survey Data Analysis role, MoSPI"}
-  ],
-  "trainings": [
-    {"competency_code": "TC-01", "course_level": "beginner", "passed_assessment": false, "course_title": "iGOT Python Basics", "source_reference": "iGOT certificate 2023"}
-  ],
-  "education": [
-    {"competency_code": "OS-02", "education_score": 4.0, "degree": "M.Sc Statistics", "field": "Statistics"}
-  ],
-  "self_reports": [
-    {"competency_code": "TC-01", "self_score": 3.5}
-  ]
+  "is_aligned": true,
+  "alignment_warning": null,
+  "assessments": [],
+  "experiences": [],
+  "trainings": [],
+  "education": [],
+  "self_reports": []
 }"""
 
 
@@ -113,21 +107,15 @@ def extract_profile(
     officer_id: str,
     role_code: str,
     profile_text: str,
-) -> OfficerProfile:
+    department: str = "",
+    designation: str = "",
+):
     """
-    Extract structured evidence from free-text officer profile with automatic model fallback.
-
-    Args:
-        officer_id: ID of the officer (for the returned OfficerProfile)
-        role_code: 'JSO' | 'SSO' | 'MCTP-II' | 'MCTP-III'
-        profile_text: Free-text description of the officer's background
-
-    Returns:
-        OfficerProfile with all evidence lists populated from the LLM extraction.
+    Extract structured evidence from free-text officer profile with automatic model fallback & AI alignment check.
     """
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Extract evidence from this officer profile:\n\n{profile_text}"},
+        {"role": "user", "content": f"Target Role: {role_code}\nDepartment: {department}\nDesignation: {designation}\n\nOfficer profile:\n{profile_text}"},
     ]
 
     try:
@@ -142,8 +130,10 @@ def extract_profile(
         raise RuntimeError(f"LLM extraction failed on primary & fallback models: {e}") from e
 
     data = parse_llm_json(raw_json)
+    alignment_warning = data.get("alignment_warning") if isinstance(data, dict) else None
 
-    return _build_profile(officer_id, role_code, data)
+    profile = _build_profile(officer_id, role_code, data)
+    return profile, alignment_warning
 
 
 def _build_profile(officer_id: str, role_code: str, data: dict) -> OfficerProfile:

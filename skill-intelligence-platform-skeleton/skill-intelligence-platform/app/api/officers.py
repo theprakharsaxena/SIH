@@ -26,6 +26,8 @@ class OfficerCreate(BaseModel):
 class ProfileExtractRequest(BaseModel):
     officer_id: Optional[str] = None
     role_code: Optional[str] = "SSO"
+    department: Optional[str] = ""
+    designation: Optional[str] = ""
     profile_text: str
 
 
@@ -135,13 +137,15 @@ def get_officer(officer_id: str, db: Session = Depends(get_db)):
 def extract_officer_profile(payload: ProfileExtractRequest, db: Session = Depends(get_db)):
     """
     Extract structured evidence facts from unstructured free text CV/profile using LLM.
-    Returns structured JSON of evidence (assessments, experiences, trainings, education, self-reports).
+    Returns structured JSON of evidence and AI alignment evaluation.
     """
     try:
-        profile: OfficerProfile = extract_profile(
+        profile, alignment_warning = extract_profile(
             officer_id=payload.officer_id or "temp-id",
             role_code=payload.role_code or "SSO",
             profile_text=payload.profile_text,
+            department=payload.department or "",
+            designation=payload.designation or "",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Profile extraction failed: {str(e)}")
@@ -149,6 +153,8 @@ def extract_officer_profile(payload: ProfileExtractRequest, db: Session = Depend
     return {
         "officer_id": profile.officer_id,
         "role_code": profile.role_code,
+        "is_aligned": alignment_warning is None,
+        "alignment_warning": alignment_warning,
         "assessments": [e.__dict__ for e in profile.assessments],
         "experiences": [e.__dict__ for e in profile.experiences],
         "trainings": [e.__dict__ for e in profile.trainings],

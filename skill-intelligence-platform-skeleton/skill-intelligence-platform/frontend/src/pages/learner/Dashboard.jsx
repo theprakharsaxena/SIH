@@ -74,24 +74,40 @@ const ROLE_RELEVANT_COMPETENCIES = {
     { code: 'DG-01', name: 'Cybersecurity' },
     { code: 'BM-04', name: 'Ethics' },
   ],
+  DS: [
+    { code: 'BM-05', name: 'Decision Making' },
+    { code: 'OS-03', name: 'National Accounts (GDP)' },
+    { code: 'BM-03', name: 'Project Management' },
+    { code: 'DG-02', name: 'Data Privacy' },
+    { code: 'BM-01', name: 'Leadership' },
+  ],
+  AD: [
+    { code: 'OS-01', name: 'Survey Design' },
+    { code: 'OS-02', name: 'Sampling Methodology' },
+    { code: 'TC-01', name: 'Python' },
+    { code: 'TC-08', name: 'Data Visualization' },
+    { code: 'BM-02', name: 'Communication' },
+  ],
 };
 
 function extractCompetencyList(gapData, roleCode = 'JSO') {
   if (!gapData) return [];
-  const rawList = gapData.competencies || gapData.gaps || [];
+  const rawList = gapData.gaps || gapData.competencies || [];
+  if (!Array.isArray(rawList) || rawList.length === 0) return [];
 
   const relevant = ROLE_RELEVANT_COMPETENCIES[roleCode] || ROLE_RELEVANT_COMPETENCIES['JSO'];
   const relevantCodes = new Set(relevant.map(r => r.code));
   const relevantNames = relevant.map(r => r.name.toLowerCase());
 
-  const filteredRaw = rawList.filter(item => {
+  // Filter raw gaps to ONLY the role-mandated competencies for this officer's role
+  const roleFiltered = rawList.filter(item => {
     const code = (item.competency_code || item.code || '').toUpperCase();
     const name = (item.competency_name || item.name || '').toLowerCase();
     if (relevantCodes.has(code)) return true;
     return relevantNames.some(rn => name.includes(rn) || rn.includes(name));
   });
 
-  const listToUse = filteredRaw.length > 0 ? filteredRaw : rawList.slice(0, 6);
+  const listToUse = roleFiltered.length > 0 ? roleFiltered : rawList.slice(0, 6);
 
   return listToUse.map(item => {
     const code = item.competency_code || item.code || '';
@@ -112,7 +128,12 @@ function extractCompetencyList(gapData, roleCode = 'JSO') {
     return {
       code,
       competency_name: name,
-      domain_category: item.domain_category || item.category_name || (code.startsWith('OS') ? '📊 Official Statistics' : code.startsWith('TC') ? '💻 Technical & Computing' : code.startsWith('DG') ? '🏛️ Digital Governance' : '🤝 Behavioural & Managerial'),
+      domain_category: item.domain_category || item.category_name || (
+        code.startsWith('OS') ? '📊 Official Statistics' :
+        code.startsWith('TC') ? '💻 Technical & Computing' :
+        code.startsWith('DG') ? '🏛️ Digital Governance' :
+        '🤝 Behavioural & Managerial'
+      ),
       current_level: current,
       required_level: required,
       gap,

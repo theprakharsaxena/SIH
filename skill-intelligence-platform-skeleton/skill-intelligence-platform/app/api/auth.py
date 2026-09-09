@@ -34,6 +34,45 @@ class Token(BaseModel):
     onboarding_complete: Optional[bool] = False
 
 
+COMP_NAME_MAP = {
+    "survey design": "OS-01",
+    "sampling methodology": "OS-02",
+    "national accounts": "OS-03",
+    "national accounts (gdp)": "OS-03",
+    "price statistics": "OS-04",
+    "labour statistics": "OS-05",
+    "field data collection": "OS-10",
+    "data entry & validation": "OS-10",
+    "data quality frameworks": "OS-10",
+    "basic statistics": "TC-01",
+    "statistical analysis": "OS-01",
+    "python": "TC-01",
+    "python / r": "TC-01",
+    "r": "TC-02",
+    "sql": "TC-03",
+    "gis": "TC-07",
+    "gis & mapping": "TC-07",
+    "report writing": "TC-08",
+    "data visualization": "TC-08",
+    "ai & machine learning": "TC-09",
+    "ai/ml": "TC-09",
+    "cloud computing": "TC-10",
+    "digital literacy": "TC-10",
+    "data privacy": "DG-02",
+    "data privacy (dpdp act)": "DG-02",
+    "cybersecurity": "DG-01",
+    "data governance": "DG-05",
+    "leadership": "BM-01",
+    "communication": "BM-02",
+    "project management": "BM-03",
+    "ethics": "BM-04",
+    "ethics in public service": "BM-04",
+    "decision making": "BM-05",
+    "policy analysis": "BM-05",
+    "change management": "BM-06",
+}
+
+
 class RegisterRequest(BaseModel):
     full_name: str
     email: str
@@ -48,6 +87,8 @@ class RegisterRequest(BaseModel):
     university: Optional[str] = None
     graduation_year: Optional[int] = None
     profile_text: Optional[str] = None  # Step 4 work experience text
+    quiz_score: Optional[float] = None
+    self_ratings: Optional[dict[str, float]] = None
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -106,7 +147,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     """
     Register a new learner / official.
-    Creates the official record from onboarding wizard data.
+    Creates the official record from onboarding wizard data and computes initial competency evidence.
     """
     # Check email uniqueness
     if db.query(Official).filter_by(email=payload.email).first():
@@ -138,20 +179,74 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(official)
 
-    # If profile text provided, trigger AI extraction async-style (best effort)
-    if payload.profile_text:
-        try:
-            from app.services.gap_service import refresh_officer_gap
-            refresh_officer_gap(
-                db=db,
-                official_id=official.id,
-                role_code=payload.role_code or "JSO",
-                profile_text=payload.profile_text,
-            )
-        except Exception:
-            pass  # Non-blocking; user still gets their account
-
     role_code = role.code if role else "JSO"
+
+    # Compute initial competency evidence and save scores to DB
+    try:
+        from app.domain.profile_extractor import extract_profile
+        from app.domain.models import OfficerProfile, AssessmentEvidence, SelfReportEvidence
+        from app.services.gap_service import run_gap_analysis
+        from app.db.models import RoleCompetencyRequirement, Competency
+
+        profile = None
+        if payload.profile_text:
+            try:
+                profile, _ = extract_profile(
+                    officer_id=official.id,
+                    role_code=role_code,
+                    profile_text=payload.profile_text,
+                    department=payload.department or "",
+                    designation=payload.designation or "",
+                )
+            except Exception:
+                profile = None
+
+        if profile is None:
+            profile = OfficerProfile(
+                officer_id=official.id,
+                role_code=role_code,
+                assessments=[],
+                experiences=[],
+                trainings=[],
+                education=[],
+                self_reports=[],
+            )
+
+        # Get role required competency codes
+        reqs = (
+            db.query(Competency.code)
+            .join(RoleCompetencyRequirement, RoleCompetencyRequirement.competency_id == Competency.id)
+            .filter(RoleCompetencyRequirement.role_id == role.id)
+            .all()
+        )
+        role_comp_codes = [c.code for c in reqs] or ["OS-01", "OS-02", "OS-10", "TC-01", "TC-03", "BM-02"]
+
+        # Add assessment evidence if quiz score passed
+        if payload.quiz_score is not None:
+            for c_code in role_comp_codes:
+                profile.assessments.append(
+                    AssessmentEvidence(
+                        competency_code=c_code,
+                        test_percent=float(payload.quiz_score),
+                        source_reference="Onboarding Diagnostic Assessment",
+                    )
+                )
+
+        # Add self-report evidence if self-ratings passed
+        if payload.self_ratings:
+            for name_or_code, rating in payload.self_ratings.items():
+                c_code = COMP_NAME_MAP.get(name_or_code.lower().strip(), name_or_code.upper().strip())
+                profile.self_reports.append(
+                    SelfReportEvidence(
+                        competency_code=c_code,
+                        self_score=float(rating),
+                    )
+                )
+
+        run_gap_analysis(db, official.id, role_code, profile, save_to_db=True)
+    except Exception as e:
+        print(f"Non-fatal error running gap analysis on register: {e}")
+
     token = create_access_token(data={
         "sub": official.id,
         "email": official.email,

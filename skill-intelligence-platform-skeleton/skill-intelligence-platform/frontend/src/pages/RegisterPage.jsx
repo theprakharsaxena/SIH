@@ -745,6 +745,8 @@ Self-Assessment Average: ${selfAvg}/5
         department: s1.department,
         designation: s1.designation || undefined,
         profile_text: fullProfileText,
+        quiz_score: quizPct,
+        self_ratings: selfRatings,
       });
       navigate('/dashboard');
     } catch (err) {

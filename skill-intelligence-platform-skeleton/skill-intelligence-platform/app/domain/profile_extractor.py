@@ -27,13 +27,12 @@ SYSTEM_PROMPT = """You are an evidence extraction & alignment assistant for Indi
 Your job: Extract structured evidence from an officer's profile text AND evaluate alignment with their target role/department. Return ONLY valid JSON.
 
 EXTRACTION & ALIGNMENT RULES:
-1. Extract only what is explicitly stated. Do NOT infer or guess.
+1. Extract all work experience, prior trainings, certifications, and educational degrees explicitly mentioned in the text.
 2. For experience relevance: 'direct' = same competency area, 'adjacent' = related area, 'tangential' = loosely related, 'unrelated' = no connection.
-3. For education: Only extract if degree is mentioned. Assign education_score: 1=unrelated, 2=unrelated+relevant coursework, 3=adjacent field bachelor's, 4=direct field bachelor's, 5=direct field master's/PhD.
-4. For training: Extract completed courses/trainings only. level must be 'none'|'beginner'|'intermediate'|'advanced'.
-5. For self_report: Only extract if officer explicitly states skill level.
-6. Competency codes: Use ONLY OS-01 to OS-12, TC-01 to TC-12, DG-01 to DG-05, BM-01 to BM-06.
-7. ALIGNMENT CHECK: Check if the CV text aligns with the officer's target role/department.
+3. For education: Extract degree and field of study. Assign education_score: 1=unrelated, 2=unrelated+relevant coursework, 3=adjacent field bachelor's, 4=direct field bachelor's, 5=direct field master's/PhD.
+4. For training: Extract completed workshops, courses, and certifications. Level must be 'none'|'beginner'|'intermediate'|'advanced'.
+5. Competency codes: Assign best matching code — OS-01 to OS-12 (Statistical), TC-01 to TC-12 (Technical), DG-01 to DG-05 (Digital Governance), BM-01 to BM-06 (Behavioural).
+6. ALIGNMENT CHECK: Check if the CV text aligns with the officer's target role/department.
    - If there is a major domain mismatch (e.g. medical doctor, surgery, mechanical engineering/welding, culinary chef, fashion actor, or student intern applying for senior director), set "is_aligned": false, and provide "alignment_warning": {"title": "Domain & Role Mismatch Detected", "message": "The uploaded background focuses on an unrelated field which does not align with your target role.", "reason": "No official statistics, survey methodology, government data analysis, or relevant admin background was found."}.
    - Otherwise, set "is_aligned": true and "alignment_warning": null.
 
@@ -48,9 +47,15 @@ OUTPUT FORMAT (return ONLY this JSON, no explanation, no markdown):
   "is_aligned": true,
   "alignment_warning": null,
   "assessments": [],
-  "experiences": [],
-  "trainings": [],
-  "education": [],
+  "experiences": [
+    {"competency_code": "OS-02", "years": 2.0, "relevance": "direct", "source_reference": "Field Investigator role at MoSPI Field Operations", "raw_text": "2 years conducting household surveys"}
+  ],
+  "trainings": [
+    {"competency_code": "OS-10", "course_level": "intermediate", "passed_assessment": true, "course_title": "NSO Workshop on CAPI Based Data Entry Tools", "source_reference": "National Statistical Office 2023"}
+  ],
+  "education": [
+    {"competency_code": "OS-01", "education_score": 4.0, "degree": "Bachelor of Science", "field": "Mathematics", "source_reference": "Patna University 2021"}
+  ],
   "self_reports": []
 }"""
 
@@ -143,10 +148,11 @@ def _build_profile(officer_id: str, role_code: str, data: dict) -> OfficerProfil
 
     assessments = []
     for item in data.get("assessments", []):
-        if isinstance(item, dict) and item.get("competency_code"):
+        if isinstance(item, dict):
+            comp_code = str(item.get("competency_code") or "TC-01").strip().upper()
             assessments.append(
                 AssessmentEvidence(
-                    competency_code=str(item["competency_code"]).strip().upper(),
+                    competency_code=comp_code,
                     test_percent=safe_float(item.get("test_percent"), 0.0),
                     source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
                 )
@@ -154,47 +160,55 @@ def _build_profile(officer_id: str, role_code: str, data: dict) -> OfficerProfil
 
     experiences = []
     for item in data.get("experiences", []):
-        if isinstance(item, dict) and item.get("competency_code"):
+        if isinstance(item, dict):
+            comp_code = str(item.get("competency_code") or "OS-02").strip().upper()
+            raw_ref = str(item.get("source_reference") or item.get("raw_text") or item.get("description") or "Work experience").strip()
             experiences.append(
                 ExperienceEvidence(
-                    competency_code=str(item["competency_code"]).strip().upper(),
+                    competency_code=comp_code,
                     years=safe_float(item.get("years"), 1.0),
                     relevance=str(item.get("relevance", "direct")).lower().strip(),
-                    source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
+                    source_reference=raw_ref,
                 )
             )
 
     trainings = []
     for item in data.get("trainings", []):
-        if isinstance(item, dict) and item.get("competency_code"):
+        if isinstance(item, dict):
+            comp_code = str(item.get("competency_code") or "OS-10").strip().upper()
+            title = str(item.get("course_title") or item.get("raw_text") or item.get("source_reference") or "Training course").strip()
             trainings.append(
                 TrainingEvidence(
-                    competency_code=str(item["competency_code"]).strip().upper(),
-                    course_level=str(item.get("course_level", "beginner")).lower().strip(),
-                    passed_assessment=bool(item.get("passed_assessment", False)),
-                    course_title=str(item.get("course_title", "")) if item.get("course_title") else None,
-                    source_reference=str(item.get("source_reference", "")) if item.get("source_reference") else None,
+                    competency_code=comp_code,
+                    course_level=str(item.get("course_level", "intermediate")).lower().strip(),
+                    passed_assessment=bool(item.get("passed_assessment", True)),
+                    course_title=title,
+                    source_reference=str(item.get("source_reference", title)),
                 )
             )
 
     education = []
     for item in data.get("education", []):
-        if isinstance(item, dict) and item.get("competency_code"):
+        if isinstance(item, dict):
+            comp_code = str(item.get("competency_code") or "OS-01").strip().upper()
+            degree = str(item.get("degree") or item.get("raw_text") or "Bachelor Degree").strip()
+            field = str(item.get("field") or "General").strip()
             education.append(
                 EducationEvidence(
-                    competency_code=str(item["competency_code"]).strip().upper(),
+                    competency_code=comp_code,
                     education_score=safe_float(item.get("education_score"), 4.0),
-                    degree=str(item.get("degree", "")) if item.get("degree") else None,
-                    field=str(item.get("field", "")) if item.get("field") else None,
+                    degree=degree,
+                    field=field,
                 )
             )
 
     self_reports = []
     for item in data.get("self_reports", []):
-        if isinstance(item, dict) and item.get("competency_code"):
+        if isinstance(item, dict):
+            comp_code = str(item.get("competency_code") or "TC-01").strip().upper()
             self_reports.append(
                 SelfReportEvidence(
-                    competency_code=str(item["competency_code"]).strip().upper(),
+                    competency_code=comp_code,
                     self_score=safe_float(item.get("self_score"), 3.0),
                 )
             )

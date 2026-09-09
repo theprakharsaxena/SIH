@@ -4,7 +4,7 @@ import axios from 'axios';
 const AuthContext = createContext(null);
 
 let getApiBase = () => {
-  let url = "http://localhost:8000" || import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
+  let url = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
   if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
     url = url.replace('http:', 'https:');
   }

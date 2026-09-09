@@ -326,6 +326,100 @@ function InfoBox({ children, color = '#eff6ff', border = '#bfdbfe', text = '#1e4
   );
 }
 
+/* ─── Role & Ministry Profile Alignment Validation ─────────────────────── */
+function checkProfileAlignment(s1, text, extractedData) {
+  if (!text || text.trim().length < 15) return null;
+
+  const t = text.toLowerCase();
+  const role = s1.role || '';
+  const dept = (s1.department || '').toLowerCase();
+  const desig = (s1.designation || '').toLowerCase();
+
+  // Keyword categories for official statistics, government data & IT
+  const statGovKeywords = [
+    'statistic', 'survey', 'sample', 'data', 'cpi', 'gdp', 'nso', 'nsso', 'mospi',
+    'field', 'census', 'analysis', 'analytics', 'python', 'r', 'sql', 'stata', 'spss',
+    'excel', 'report', 'governance', 'policy', 'investigator', 'officer', 'ministry',
+    'government', 'administration', 'research', 'public', 'audit', 'economics',
+    'math', 'mathematics', 'indicator', 'plfs', 'hces', 'asi', 'iip', 'gis', 'database',
+    'project', 'manager', 'director', 'evaluation', 'monitoring', 'computer', 'software',
+    'developer', 'system', 'nic', 'dpiit', 'diid', 'it division', 'cso', 'dashboard'
+  ];
+
+  const unrelatedDomains = [
+    {
+      domain: 'Medical & Clinical Healthcare',
+      keywords: ['surgery', 'surgeon', 'patient', 'hospital', 'clinic', 'dentist', 'dental', 'nursing', 'medical doctor', 'pharma', 'pharmacist', 'prescription', 'pediatrician', 'pathology'],
+    },
+    {
+      domain: 'Mechanical & Civil Engineering',
+      keywords: ['mechanical engineer', 'automotive', 'welding', 'cad/cam', 'engine overhaul', 'construction site', 'masonry', 'plumbing', 'hvac', 'machining', 'automobile'],
+    },
+    {
+      domain: 'Culinary & Hospitality Services',
+      keywords: ['chef', 'head baker', 'restaurant waiter', 'bartender', 'kitchen staff', 'food & beverage', 'culinary', 'pastry'],
+    },
+    {
+      domain: 'Fashion, Beauty & Performing Arts',
+      keywords: ['fashion designer', 'hairdresser', 'makeup artist', 'actor', 'acting', 'dance instructor', 'music producer', 'beautician'],
+    },
+  ];
+
+  // Count matches
+  const matchedGovCount = statGovKeywords.filter(k => t.includes(k)).length;
+
+  // Check unrelated domain matches
+  let detectedDomain = null;
+  let maxDomainMatches = 0;
+
+  for (const item of unrelatedDomains) {
+    const matches = item.keywords.filter(k => t.includes(k));
+    if (matches.length >= 2 || (matches.length === 1 && t.length < 250)) {
+      if (matches.length > maxDomainMatches) {
+        maxDomainMatches = matches.length;
+        detectedDomain = item.domain;
+      }
+    }
+  }
+
+  // Case 1: Unrelated Domain detected with minimal statistical/gov context
+  if (detectedDomain && matchedGovCount < 2) {
+    return {
+      severity: 'warning',
+      title: 'Domain & Role Mismatch Detected',
+      message: `The uploaded CV / background text focuses on "${detectedDomain}". This does not align with your selected role (${s1.role || 'Officer'}) and department (${s1.department || 'MoSPI'}).`,
+      reason: `No official statistics, survey methodology, government data analysis, or relevant IT/admin background was found in the text for ${s1.department || 'MoSPI'}.`,
+      detectedDomain,
+    };
+  }
+
+  // Case 2: Zero government/stats/data keywords in a multi-word text
+  if (matchedGovCount === 0 && text.trim().split(/\s+/).length >= 20) {
+    return {
+      severity: 'warning',
+      title: 'Profile Alignment Warning',
+      message: `The uploaded background details do not appear aligned with the requirements for ${s1.role || 'Officer'} in ${s1.department || 'MoSPI'}.`,
+      reason: `The platform expects experience or education related to data collection, statistical methods, survey operations, economics, or public administration.`,
+      detectedDomain: 'Unaligned Background Text',
+    };
+  }
+
+  // Case 3: Senior Cadre (MCTP-II / MCTP-III / DS / AD) with entry-level student/intern text
+  const isSenior = ['MCTP-II', 'MCTP-III', 'DS', 'AD'].includes(role);
+  const isInternStudent = (t.includes('intern') || t.includes('student') || t.includes('fresher')) && !t.includes('officer') && !t.includes('director') && !t.includes('manager');
+  if (isSenior && isInternStudent && matchedGovCount < 3) {
+    return {
+      severity: 'warning',
+      title: 'Cadre Level & Seniority Mismatch',
+      message: `You selected a senior officer role (${role} - ${s1.department || 'MoSPI'}), but the uploaded text indicates entry-level or student experience.`,
+      reason: `Senior Cadre roles (MCTP / Deputy Director) require verified supervisory, policy formulation, or statistical management experience.`,
+      detectedDomain: 'Entry-Level / Student Resume',
+    };
+  }
+
+  return null;
+}
+
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -345,6 +439,8 @@ export default function RegisterPage() {
   const [pdfFile, setPdfFile] = useState(null);     // { name, size }
   const [pdfParsing, setPdfParsing] = useState(false);
   const pdfInputRef = useRef(null);
+  const [alignmentWarning, setAlignmentWarning] = useState(null);
+  const [acknowledgedWarning, setAcknowledgedWarning] = useState(false);
 
   /* ── Auto-fill Demo Account Handler ── */
   const handleAutoFillDemo = () => {
@@ -361,6 +457,8 @@ export default function RegisterPage() {
       `Rajesh Kumar - Junior Statistical Officer (JSO) at MoSPI Field Operations.\n\nEducation: M.Sc. in Statistics (2020), B.Sc. in Mathematics.\n\nExperience: 3 years conducting Household Consumer Expenditure Surveys (HCES) and Periodic Labour Force Surveys (PLFS). Skilled in field data collection, sampling validation, questionnaire administration, and basic statistical analysis using Excel and Python.\n\nTrainings: Completed NSSTA Foundational Training in Official Statistics and Field Survey Techniques.`
     );
     setError('');
+    setAlignmentWarning(null);
+    setAcknowledgedWarning(false);
   };
 
   /* ── PDF → text extractor ── */
@@ -379,7 +477,11 @@ export default function RegisterPage() {
         const content = await page.getTextContent();
         fullText += content.items.map(item => item.str).join(' ') + '\n';
       }
-      setProfileText(fullText.trim());
+      const trimmed = fullText.trim();
+      setProfileText(trimmed);
+      const warn = checkProfileAlignment(s1, trimmed, null);
+      setAlignmentWarning(warn);
+      setAcknowledgedWarning(false);
     } catch {
       setProfileText('');
       setPdfFile(null);
@@ -424,6 +526,9 @@ export default function RegisterPage() {
   const validate2 = () => {
     if (!profileText.trim()) return 'Please provide your CV or background details.';
     if (!extracted) return 'Please click "Extract with AI" before continuing.';
+    if (alignmentWarning && !acknowledgedWarning) {
+      return `Profile Mismatch Alert: The uploaded CV background does not align with your selected role (${s1.role} - ${s1.department}). Please review the warning box or click "Proceed Anyway".`;
+    }
     return null;
   };
 
@@ -508,6 +613,12 @@ export default function RegisterPage() {
     if (!profileText.trim()) { setError('Please paste your background text first.'); return; }
     setExtracting(true);
     setError('');
+
+    // Pre-evaluate profile alignment with role & department
+    const warn = checkProfileAlignment(s1, profileText, null);
+    setAlignmentWarning(warn);
+    setAcknowledgedWarning(false);
+
     try {
       const res = await api.post('/officers/extract-profile', {
         role_code: s1.role || 'SSO',
@@ -515,6 +626,10 @@ export default function RegisterPage() {
       });
       const d = res.data;
       setExtracted(d);
+      
+      const finalWarn = checkProfileAlignment(s1, profileText, d);
+      setAlignmentWarning(finalWarn);
+
       const fmtExp = (e) => {
         if (e.raw_text || e.description) return e.raw_text || e.description;
         const parts = [];
@@ -815,6 +930,88 @@ Self-Assessment Average: ${selfAvg}/5
 
                 <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>
                   ✏️ These facts are used to compute your competency scores. Corrections here update your profile.
+                </div>
+              </div>
+            )}
+
+            {/* Profile Alignment Warning Banner */}
+            {alignmentWarning && !acknowledgedWarning && (
+              <div style={{
+                background: '#fff7ed',
+                border: '2px solid #fdba74',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginTop: '0.5rem',
+                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <AlertCircle size={24} color="#ea580c" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: '#9a3412', fontSize: '0.95rem', marginBottom: '0.35rem' }}>
+                      ⚠️ {alignmentWarning.title}
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#7c2d12', lineHeight: 1.5, marginBottom: '0.6rem' }}>
+                      {alignmentWarning.message}
+                    </div>
+                    <div style={{ background: '#ffedd5', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #fed7aa', fontSize: '0.78rem', color: '#9a3412', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+                      📌 <strong>Reason:</strong> {alignmentWarning.reason}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        style={{
+                          background: '#ea580c',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.45rem 0.95rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✏️ Change Role / Ministry (Step 1)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileText('');
+                          setExtracted(null);
+                          setPdfFile(null);
+                          setAlignmentWarning(null);
+                          if (pdfInputRef.current) pdfInputRef.current.value = '';
+                        }}
+                        style={{
+                          background: 'white',
+                          color: '#9a3412',
+                          border: '1.5px solid #fdba74',
+                          borderRadius: '6px',
+                          padding: '0.45rem 0.95rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📄 Clear & Paste Relevant CV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAcknowledgedWarning(true)}
+                        style={{
+                          background: 'transparent',
+                          color: '#6b7280',
+                          border: 'none',
+                          padding: '0.45rem 0.5rem',
+                          fontSize: '0.76rem',
+                          cursor: 'pointer',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        Proceed Anyway (Career Transition)
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

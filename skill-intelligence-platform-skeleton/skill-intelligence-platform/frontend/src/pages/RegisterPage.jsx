@@ -346,6 +346,23 @@ export default function RegisterPage() {
   const [pdfParsing, setPdfParsing] = useState(false);
   const pdfInputRef = useRef(null);
 
+  /* ── Auto-fill Demo Account Handler ── */
+  const handleAutoFillDemo = () => {
+    setS1({
+      name: 'Rajesh Kumar',
+      email: 'rajesh.kumar@mospi.gov.in',
+      password: 'secure456',
+      confirm: 'secure456',
+      role: 'JSO',
+      department: 'MoSPI - Field Operations',
+      designation: 'Field Investigator'
+    });
+    setProfileText(
+      `Rajesh Kumar - Junior Statistical Officer (JSO) at MoSPI Field Operations.\n\nEducation: M.Sc. in Statistics (2020), B.Sc. in Mathematics.\n\nExperience: 3 years conducting Household Consumer Expenditure Surveys (HCES) and Periodic Labour Force Surveys (PLFS). Skilled in field data collection, sampling validation, questionnaire administration, and basic statistical analysis using Excel and Python.\n\nTrainings: Completed NSSTA Foundational Training in Official Statistics and Field Survey Techniques.`
+    );
+    setError('');
+  };
+
   /* ── PDF → text extractor ── */
   const handlePdfUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -649,8 +666,31 @@ Self-Assessment Average: ${selfAvg}/5
           </div>
           <div style={{ marginTop: '2rem', padding: '1rem', background: '#f9fafb', borderRadius: '10px', border: '1px solid #e5e7eb' }}>
             <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 600, marginBottom: '0.4rem' }}>DEMO ACCOUNTS</div>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.6 }}>
-              <strong>Learner:</strong> Rajesh Kumar / rajesh.kumar@mospi.gov.in / secure456 / Junior Statistical Officer (JSO) / MOSPI - Field Operations / Field Investigator<br />
+            <div style={{ fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <strong>Learner:</strong> Rajesh Kumar / rajesh.kumar@mospi.gov.in / secure456 / Junior Statistical Officer (JSO) / MoSPI - Field Operations / Field Investigator
+              </div>
+              <button
+                type="button"
+                onClick={handleAutoFillDemo}
+                style={{
+                  background: ORANGE,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 2px 4px rgba(232, 114, 10, 0.25)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                ✨ Auto-Fill Demo Details
+              </button>
             </div>
           </div>
             </>

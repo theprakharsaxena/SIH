@@ -468,6 +468,11 @@ export default function LearningPathRoadmap({
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                               <Star size={11} fill="#16a34a" /> {(rec.relevance_score * 100).toFixed(0)}% Match
                             </span>
+                            {rec.serves_next_role && (
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '0.15rem 0.55rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                🚀 Career Progression (Also required for {rec.next_role_code || 'Next Cadre'})
+                              </span>
+                            )}
                           </div>
 
                           <div>

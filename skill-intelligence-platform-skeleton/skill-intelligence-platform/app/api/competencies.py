@@ -132,3 +132,22 @@ def get_role_requirements(code: str, db: Session = Depends(get_db)):
             for req, c in reqs
         ],
     }
+
+
+@router.get("/future-readiness")
+def get_learner_future_readiness(db: Session = Depends(get_db)):
+    """
+    Returns future-readiness signals for official dashboard (Tab 5).
+    Lists competencies with 🔴 Rising / 🟡 Stable institutional priority badges and sourced notes.
+    """
+    comps = db.query(Competency).order_by(Competency.code).all()
+    return [
+        {
+            "code": c.code,
+            "name": c.name,
+            "domain_category": c.domain_category,
+            "future_readiness_tag": getattr(c, "future_readiness_tag", "Stable") or "Stable",
+            "future_readiness_note": getattr(c, "future_readiness_note", None) or "Standard institutional competency requirement.",
+        }
+        for c in comps
+    ]

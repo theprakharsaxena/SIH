@@ -99,6 +99,16 @@ def _build_reason_text(
 
 # ─── Main recommendation function ─────────────────────────────────────────────
 
+NEXT_ROLE_MAP = {
+    "JSO": "SSO",
+    "SSO": "MCTP-II",
+    "MCTP-II": "MCTP-III",
+    "MCTP-III": "MCTP-III",
+    "DS": "MCTP-III",
+    "AD": "SSO",
+}
+
+
 def recommend_courses(
     db: Session,
     officer_id: str,
@@ -127,6 +137,20 @@ def recommend_courses(
 
     # Build set of competency codes with gaps
     gap_codes = {g.competency_code for g in actionable_gaps}
+
+    # Load officer's next role for career progression check
+    next_role_code = NEXT_ROLE_MAP.get(gap_report.role_code, "SSO")
+    next_role_comp_codes = set()
+    from app.db.models import Role, RoleCompetencyRequirement
+    next_role = db.query(Role).filter_by(code=next_role_code).one_or_none()
+    if next_role:
+        next_reqs = (
+            db.query(Competency.code)
+            .join(RoleCompetencyRequirement, RoleCompetencyRequirement.competency_id == Competency.id)
+            .filter(RoleCompetencyRequirement.role_id == next_role.id)
+            .all()
+        )
+        next_role_comp_codes = {c.code for c in next_reqs}
 
     # Load officer's enrollment history (to deprioritize already-taken courses)
     enrolled_course_ids = {
@@ -164,6 +188,7 @@ def recommend_courses(
         ))
 
         already_enrolled = course_id in enrolled_course_ids
+        serves_next_role = bool(comp_codes.intersection(next_role_comp_codes))
 
         # ── Score components ──
         role_match   = _role_match_score(comp_codes, primary_gap)
@@ -193,7 +218,7 @@ def recommend_courses(
             already_enrolled=already_enrolled,
         )
 
-        recommendations.append(CourseRecommendation(
+        rec = CourseRecommendation(
             course_id=course_id,
             course_title=course.title,
             provider_type=course.provider_type,
@@ -212,7 +237,10 @@ def recommend_courses(
                 "history":      round(history, 3),
             },
             reason_text=reason,
-        ))
+        )
+        rec.serves_next_role = serves_next_role
+        rec.next_role_code = next_role_code if serves_next_role else None
+        recommendations.append(rec)
 
     # Sort by score descending, then by gap size as tiebreaker
     recommendations.sort(key=lambda r: (-r.relevance_score, -r.gap_addressed))
@@ -237,6 +265,8 @@ def recommendations_to_dict(recs: list[CourseRecommendation]) -> list[dict]:
             "relevance_score": r.relevance_score,
             "score_breakdown": r.score_breakdown,
             "reason_text": r.reason_text,
+            "serves_next_role": getattr(r, "serves_next_role", False),
+            "next_role_code": getattr(r, "next_role_code", None),
         }
         for i, r in enumerate(recs)
     ]

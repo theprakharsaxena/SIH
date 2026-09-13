@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import {
   BrainCircuit, LayoutDashboard, BookOpen, ClipboardCheck,
-  User, LogOut, ChevronLeft, Menu, Bell,
+  User, LogOut, ChevronLeft, Menu, Bell, TrendingUp, Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -14,6 +14,8 @@ const NAV_ITEMS = [
   { path: '/dashboard', label: 'My Dashboard', icon: LayoutDashboard },
   { path: '/dashboard/courses', label: 'My Courses', icon: BookOpen },
   { path: '/dashboard/assessment', label: 'Take Assessment', icon: ClipboardCheck },
+  { path: '/dashboard/progress', label: 'Progress Over Time', icon: TrendingUp },
+  { path: '/dashboard/future-readiness', label: 'Future Readiness', icon: Sparkles },
   { path: '/dashboard/profile', label: 'My Profile', icon: User },
 ];
 

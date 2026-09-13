@@ -4,11 +4,13 @@ import axios from 'axios';
 const AuthContext = createContext(null);
 
 let getApiBase = () => {
-  let url = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
-    url = url.replace('http:', 'https:');
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
   }
-  return url;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8000';
+  }
+  return 'https://mospi-api.duckdns.org';
 };
 
 const API_BASE = getApiBase();

@@ -176,3 +176,37 @@ def generate_diagnostic_quiz_endpoint(payload: DiagnosticQuizRequest):
     )
     return {"questions": questions}
 
+
+@router.get("/{officer_id}/progress-history")
+def get_officer_progress_history(officer_id: str, db: Session = Depends(get_db)):
+    """
+    Returns time-series history of competency evidence updates for the specified officer.
+    Powers Tab 4 (Progress Over Time) line charts on the Learner Dashboard.
+    """
+    from app.db.models import CompetencyEvidence
+    evidence_rows = (
+        db.query(CompetencyEvidence)
+        .filter_by(official_id=officer_id)
+        .order_by(CompetencyEvidence.created_at.asc())
+        .all()
+    )
+
+    comp_map = {}
+    for ev in evidence_rows:
+        c_code = ev.competency.code if ev.competency else "COMP"
+        c_name = ev.competency.name if ev.competency else "Competency"
+        if c_code not in comp_map:
+            comp_map[c_code] = {
+                "competency_code": c_code,
+                "competency_name": c_name,
+                "history": []
+            }
+        comp_map[c_code]["history"].append({
+            "timestamp": ev.created_at.isoformat() if ev.created_at else None,
+            "evidence_type": ev.evidence_type,
+            "raw_score": float(ev.raw_score) if ev.raw_score is not None else 0.0,
+            "source": ev.source_reference or ev.extracted_by,
+        })
+
+    return {"progress_history": list(comp_map.values())}
+

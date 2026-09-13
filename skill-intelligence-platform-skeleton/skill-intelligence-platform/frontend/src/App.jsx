@@ -17,6 +17,8 @@ import LearnerDashboard  from './pages/learner/Dashboard';
 import CoursesPage       from './pages/learner/CoursesPage';
 import LearnerAssessment from './pages/learner/AssessmentPage';
 import ProfilePage       from './pages/learner/ProfilePage';
+import ProgressPage      from './pages/learner/ProgressPage';
+import FutureReadinessLearnerPage from './pages/learner/FutureReadinessLearnerPage';
 
 // Admin pages
 import AdminLogin           from './pages/admin/AdminLogin';
@@ -24,6 +26,10 @@ import AdminHome            from './pages/admin/AdminHome';
 import OfficersPage         from './pages/admin/OfficersPage';
 import HeatmapPage          from './pages/admin/HeatmapPage';
 import AssessmentAnalytics  from './pages/admin/AssessmentAnalytics';
+import FutureReadinessPage  from './pages/admin/FutureReadinessPage';
+import TrainingEffectivenessPage from './pages/admin/TrainingEffectivenessPage';
+import IntegrationStatusPage from './pages/admin/IntegrationStatusPage';
+import ReferenceMaterialsPage from './pages/admin/ReferenceMaterialsPage';
 
 export default function App() {
   return (
@@ -50,6 +56,8 @@ export default function App() {
             <Route index        element={<LearnerDashboard />} />
             <Route path="courses"    element={<CoursesPage />} />
             <Route path="assessment" element={<LearnerAssessment />} />
+            <Route path="progress"   element={<ProgressPage />} />
+            <Route path="future-readiness" element={<FutureReadinessLearnerPage />} />
             <Route path="profile"    element={<ProfilePage />} />
           </Route>
 
@@ -67,6 +75,10 @@ export default function App() {
             <Route path="officers"    element={<OfficersPage />} />
             <Route path="heatmap"     element={<HeatmapPage />} />
             <Route path="assessments" element={<AssessmentAnalytics />} />
+            <Route path="future-readiness" element={<FutureReadinessPage />} />
+            <Route path="training-effectiveness" element={<TrainingEffectivenessPage />} />
+            <Route path="reference-materials" element={<ReferenceMaterialsPage />} />
+            <Route path="integration-status" element={<IntegrationStatusPage />} />
           </Route>
 
           {/* ── Fallback ── */}

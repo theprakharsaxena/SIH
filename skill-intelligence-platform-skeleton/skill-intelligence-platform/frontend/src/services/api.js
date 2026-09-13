@@ -1,24 +1,26 @@
 import axios from 'axios';
 
 let getBaseUrl = () => {
-  let url = import.meta.env.VITE_API_BASE_URL || 'https://mospi-api.duckdns.org';
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http:')) {
-    url = url.replace('http:', 'https:');
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
   }
-  return url;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8000';
+  }
+  return 'https://mospi-api.duckdns.org';
 };
 
 const API_BASE_URL = getBaseUrl();
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
-/* ── Inject JWT token on every request & enforce HTTPS ── */
+/* ── Inject JWT token on every request & enforce HTTPS for non-localhost ── */
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    if (config.baseURL && config.baseURL.startsWith('http:')) {
+    if (config.baseURL && config.baseURL.startsWith('http:') && !config.baseURL.includes('localhost') && !config.baseURL.includes('127.0.0.1')) {
       config.baseURL = config.baseURL.replace('http:', 'https:');
     }
-    if (config.url && config.url.startsWith('http:')) {
+    if (config.url && config.url.startsWith('http:') && !config.url.includes('localhost') && !config.url.includes('127.0.0.1')) {
       config.url = config.url.replace('http:', 'https:');
     }
   }
@@ -167,6 +169,68 @@ export const deleteAdminOfficer = async (officerId) => {
 
 export const fetchAssessmentResults = async (skip = 0, limit = 50) => {
   const res = await api.get(`/admin/assessment-results?skip=${skip}&limit=${limit}`);
+  return res.data;
+};
+
+export const fetchFutureReadinessSignals = async () => {
+  const res = await api.get('/admin/future-readiness');
+  return res.data;
+};
+
+export const updateFutureReadinessSignal = async (code, payload) => {
+  const res = await api.put(`/admin/future-readiness/${code}`, payload);
+  return res.data;
+};
+
+export const suggestFutureReadinessSignal = async (documentText) => {
+  const res = await api.post('/admin/future-readiness/suggest-signal', { document_text: documentText });
+  return res.data;
+};
+
+export const fetchTrainingEffectiveness = async () => {
+  const res = await api.get('/admin/training-effectiveness');
+  return res.data;
+};
+
+export const fetchIntegrationStatus = async () => {
+  const res = await api.get('/admin/integration-status');
+  return res.data;
+};
+
+export const fetchProgressHistory = async (officerId) => {
+  const res = await api.get(`/officers/${officerId}/progress-history`);
+  return res.data;
+};
+
+export const fetchLearnerFutureReadiness = async () => {
+  const res = await api.get('/future-readiness');
+  return res.data;
+};
+
+export const fetchReferenceMaterials = async () => {
+  const res = await api.get('/admin/materials');
+  return res.data;
+};
+
+export const uploadReferenceMaterial = async (filename, roleCode) => {
+  const res = await api.post(`/admin/materials/upload?filename=${encodeURIComponent(filename)}&role_code=${encodeURIComponent(roleCode)}`);
+  return res.data;
+};
+
+export const uploadReferenceMaterialFile = async (file, roleCode, courseId = null) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('role_code', roleCode);
+  if (courseId) formData.append('course_id', courseId);
+
+  const res = await api.post('/admin/materials/upload-file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+};
+
+export const fetchMaterialDetails = async (materialId) => {
+  const res = await api.get(`/admin/materials/${materialId}/details`);
   return res.data;
 };
 

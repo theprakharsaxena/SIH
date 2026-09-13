@@ -42,6 +42,8 @@ class Competency(Base):
     ps_mandated: Mapped[bool] = mapped_column(Boolean, default=False)
     source_status: Mapped[str] = mapped_column(String, default="prototype")
     source_note: Mapped[Optional[str]] = mapped_column(Text)
+    future_readiness_tag: Mapped[Optional[str]] = mapped_column(String, default="Stable")
+    future_readiness_note: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     role_requirements: Mapped[list["RoleCompetencyRequirement"]] = relationship(back_populates="competency")
@@ -263,9 +265,13 @@ class UploadedMaterial(Base):
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     uploaded_by: Mapped[Optional[str]] = mapped_column(ForeignKey("officials.id"))
+    role_id: Mapped[Optional[str]] = mapped_column(ForeignKey("roles.id"))
+    course_id: Mapped[Optional[str]] = mapped_column(ForeignKey("courses.id"))
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     competency_id: Mapped[Optional[str]] = mapped_column(ForeignKey("competencies.id"))
     storage_path: Mapped[str] = mapped_column(Text, nullable=False)
+    context: Mapped[str] = mapped_column(String, default="standalone_upload")  # 'baseline_reference' | 'course_material' | 'standalone_upload'
+    extracted_chunks: Mapped[Optional[dict]] = mapped_column(JSONB)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     assessments: Mapped[list["Assessment"]] = relationship(back_populates="source_material")

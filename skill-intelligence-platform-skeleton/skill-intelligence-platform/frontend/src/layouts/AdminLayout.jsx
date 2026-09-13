@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import {
   Shield, LayoutDashboard, Users, BarChart3, ClipboardList,
-  LogOut, Menu, ChevronLeft, Bell, BrainCircuit,
+  LogOut, Menu, ChevronLeft, Bell, BrainCircuit, Sparkles, TrendingUp, Server, FileText,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,6 +15,10 @@ const NAV_ITEMS = [
   { path: '/admin/officers', label: 'Officers', icon: Users },
   { path: '/admin/heatmap', label: 'Skill Heatmap', icon: BarChart3 },
   { path: '/admin/assessments', label: 'Assessments', icon: ClipboardList },
+  { path: '/admin/future-readiness', label: 'AI Signal Assistant', icon: Sparkles },
+  { path: '/admin/training-effectiveness', label: 'Training Impact', icon: TrendingUp },
+  { path: '/admin/reference-materials', label: 'Reference Material', icon: FileText },
+  { path: '/admin/integration-status', label: 'Integration Register', icon: Server },
 ];
 
 export default function AdminLayout() {

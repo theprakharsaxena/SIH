@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { fetchReferenceMaterials, uploadReferenceMaterialFile, fetchMaterialDetails } from '../../services/api';
-import { FileText, Upload, RefreshCw, BookOpen, CheckCircle, FilePlus, Loader, Eye, X, HelpCircle, Layers } from 'lucide-react';
+import { FileText, Upload, RefreshCw, BookOpen, CheckCircle, FilePlus, Loader, Eye, X, HelpCircle, Layers, ShieldCheck } from 'lucide-react';
 
 const NAVY = '#1a3a6b';
 const ORANGE = '#e8720a';

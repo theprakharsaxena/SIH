@@ -516,17 +516,23 @@ async def upload_reference_material_file(
     db.commit()
     db.refresh(mat)
 
-    # 2. Generate and persist baseline MCQs in DB
+    # 2. Generate and persist baseline MCQs in DB via validated pipeline
     try:
-        raw_qs = generate_mcqs(
-            filepath=file_location,
-            competency_code="BASELINE",
-            total_questions=5,
-            max_chunks=5,
+        from app.domain.assessment_generator import generate_validated_assessment
+        from app.domain.mcq_engine import extract_text, generate_mcqs, mcq_to_dict
+
+        # Extract text pages/chunks
+        raw_text_chunks = [c["text"] for c in formatted_chunks] if formatted_chunks else ["Standard MoSPI statistical guidelines."]
+        gen_result = generate_validated_assessment(
+            pages=raw_text_chunks,
+            competency_name="Official Statistics",
+            competency_id="OS-01",
+            max_questions=5
         )
+
         comp = db.query(Competency).first()
         official = db.query(Official).first()
-        if raw_qs and comp and official:
+        if (gen_result.accepted or gen_result.flagged_for_review) and comp and official:
             assess_rec = Assessment(
                 official_id=official.id,
                 competency_id=comp.id,
@@ -538,15 +544,20 @@ async def upload_reference_material_file(
             db.commit()
             db.refresh(assess_rec)
 
-            for q in raw_qs:
+            items_to_save = gen_result.accepted + gen_result.flagged_for_review
+            for q in items_to_save:
+                opts = q.get("options", [])
+                if isinstance(opts, dict):
+                    opts = [{"id": k.lower(), "text": v} for k, v in opts.items()]
+                
                 db_q = AssessmentQuestion(
                     assessment_id=assess_rec.id,
-                    question_text=q.question_text,
-                    options=[{"id": o.id, "text": o.text} for o in q.options],
-                    correct_option_id=q.correct_option_id,
-                    explanation=q.explanation,
-                    difficulty=q.difficulty,
-                    source_excerpt_ref=q.source_excerpt_ref,
+                    question_text=q.get("question_text", "Baseline Question"),
+                    options=opts,
+                    correct_option_id=q.get("correct_option_id") or q.get("correct_option") or "a",
+                    explanation=q.get("explanation", ""),
+                    difficulty=q.get("difficulty", "medium"),
+                    source_excerpt_ref=q.get("source_excerpt_ref") or "Source Material",
                 )
                 db.add(db_q)
             db.commit()

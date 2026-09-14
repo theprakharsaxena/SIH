@@ -73,9 +73,9 @@ export default function WorkforceReadinessScore({ data }) {
             <span>Current Cadre Readiness: <strong style={{ color: 'white' }}>68.5%</strong></span>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <span>Missing Critical Capabilities:</span>
-              <span className="badge badge-cat-c" style={{ fontSize: '0.65rem' }}>🔴 GIS</span>
-              <span className="badge badge-cat-c" style={{ fontSize: '0.65rem' }}>🔴 AI/ML</span>
-              <span className="badge badge-cat-b" style={{ fontSize: '0.65rem' }}>🟡 Data Quality</span>
+              <span className="badge badge-cat-c" style={{ fontSize: '0.65rem' }}>GIS</span>
+              <span className="badge badge-cat-c" style={{ fontSize: '0.65rem' }}>AI/ML</span>
+              <span className="badge badge-cat-b" style={{ fontSize: '0.65rem' }}>Data Quality</span>
             </div>
           </div>
         </div>

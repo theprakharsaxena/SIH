@@ -194,7 +194,7 @@ function NKMGuide({ role }) {
         }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          💡 <span>Understanding AI Extraction & MoSPI (NKM) Competency Framework</span>
+          <FileText size={16} /> <span>MoSPI National Knowledge Mission (NKM) Competency Guide</span>
         </span>
         <span style={{ fontSize: '0.75rem', color: ORANGE, fontWeight: 700 }}>
           {open ? 'Hide Guide ▲' : 'Show Framework & Codes Guide ▼'}
@@ -204,36 +204,36 @@ function NKMGuide({ role }) {
       {open && (
         <div style={{ padding: '1rem', fontSize: '0.78rem', color: '#334155', lineHeight: 1.55 }}>
           <div style={{ fontWeight: 700, color: NAVY, marginBottom: '0.4rem', fontSize: '0.84rem' }}>
-            🏛️ What is Pre-Defined (Standardized NKM Framework)?
+            Standardized NKM Competency Matrix
           </div>
           <p style={{ margin: '0 0 0.75rem 0', color: '#475569' }}>
-            The National Knowledge Mission (NKM) Competency Framework defines <strong>35 Official Competencies</strong> across 4 MoSPI domains. Clicking <strong>"Extract with AI"</strong> reads your CV text and tags facts with these official codes:
+            The National Knowledge Mission (NKM) Competency Framework defines <strong>35 Official Competencies</strong> across 4 MoSPI domains. Automatic parsing analyzes your experience text and tags facts with these official codes:
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.85rem' }}>
             <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: '0.2rem' }}>📊 Official Statistics (OS-01 to OS-12)</div>
+              <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: '0.2rem' }}>Official Statistics (OS-01 to OS-12)</div>
               <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Survey Design, Sampling, CPI, National Accounts (GDP), Price Index, Labour Statistics (PLFS).</div>
             </div>
 
             <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontWeight: 700, color: '#047857', marginBottom: '0.2rem' }}>💻 Technical & Computing (TC-01 to TC-12)</div>
+              <div style={{ fontWeight: 700, color: '#047857', marginBottom: '0.2rem' }}>Technical & Computing (TC-01 to TC-12)</div>
               <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Python, R, SQL, GIS Mapping, Stata, SPSS, Data Visualization, AI/ML, Cloud Computing.</div>
             </div>
 
             <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontWeight: 700, color: '#7c3aed', marginBottom: '0.2rem' }}>🏛️ Digital Governance (DG-01 to DG-05)</div>
+              <div style={{ fontWeight: 700, color: '#7c3aed', marginBottom: '0.2rem' }}>Digital Governance (DG-01 to DG-05)</div>
               <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Cybersecurity, Data Privacy (DPDP Act 2023), Digital Signatures, Gov Cloud, DPI.</div>
             </div>
 
             <div style={{ background: 'white', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontWeight: 700, color: '#b45309', marginBottom: '0.2rem' }}>🤝 Behavioural & Managerial (BM-01 to BM-06)</div>
+              <div style={{ fontWeight: 700, color: '#b45309', marginBottom: '0.2rem' }}>Behavioural & Managerial (BM-01 to BM-06)</div>
               <div style={{ color: '#64748b', fontSize: '0.72rem' }}>Executive Leadership, Stakeholder Communication, Project Management, Ethics in Public Service.</div>
             </div>
           </div>
 
           <div style={{ background: '#eff6ff', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #bfdbfe', color: '#1e40af' }}>
-            🎯 <strong>Role Required Target Score (1.0 – 5.0):</strong> Each cadre level (e.g. <strong>{role || 'JSO / SSO'}</strong>) has official target levels stored in the database. The extracted facts link directly to your target levels to calculate your skill gaps!
+            <strong>Target Cadre Benchmarks (1.0 – 5.0):</strong> Each cadre level (e.g. <strong>{role || 'JSO / SSO'}</strong>) maps directly to official required target scores stored in the database.
           </div>
         </div>
       )}

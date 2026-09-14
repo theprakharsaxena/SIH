@@ -10,6 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import UPLOAD_DIR
+from app.db.session import get_db
 from app.db.models import (
     Official, Role, Competency, CompetencyScore, Course, Enrollment,
     AssessmentResult, UploadedMaterial, Assessment, AssessmentQuestion

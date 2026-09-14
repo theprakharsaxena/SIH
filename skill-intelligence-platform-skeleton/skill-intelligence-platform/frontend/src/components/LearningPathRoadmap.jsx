@@ -311,73 +311,73 @@ export default function LearningPathRoadmap({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-              <span style={{ background: ORANGE, color: 'white', fontSize: '0.72rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                AI Dynamic LLM Assessment Pathway
+              <span className="badge badge-navy">
+                Mandatory Cadre Learning Pathway
               </span>
               <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>
                 {roleCode} Framework
               </span>
             </div>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'white', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-              🗺️ Personalized Dynamic Learning Roadmap
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'white', margin: 0 }}>
+              Curated Officer Learning Pathway
             </h2>
             <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.85)', marginTop: '0.35rem', maxWidth: '680px', lineHeight: 1.5 }}>
-              Quiz questions are generated dynamically via DeepSeek AI for each course. Passing updates your official competency score and redesigns your learning roadmap.
+              Structured competency enhancement modules aligned with official statistics standards. Passing evaluations updates your evidence matrix and recalculates skill gaps.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.12)', padding: '0.25rem', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.2)' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.12)', padding: '0.25rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}>
             <button
               onClick={() => setViewMode('roadmap')}
               style={{
                 background: viewMode === 'roadmap' ? 'white' : 'transparent',
                 color: viewMode === 'roadmap' ? NAVY : 'white',
-                border: 'none', padding: '0.4rem 0.9rem', borderRadius: '20px',
+                border: 'none', padding: '0.4rem 0.9rem', borderRadius: '4px',
                 fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '0.35rem'
               }}
             >
-              <Layers size={13} /> Roadmap View
+              <Layers size={13} /> Pathway Timeline
             </button>
             <button
               onClick={() => setViewMode('grid')}
               style={{
                 background: viewMode === 'grid' ? 'white' : 'transparent',
                 color: viewMode === 'grid' ? NAVY : 'white',
-                border: 'none', padding: '0.4rem 0.9rem', borderRadius: '20px',
+                border: 'none', padding: '0.4rem 0.9rem', borderRadius: '4px',
                 fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '0.35rem'
               }}
             >
-              <BarChart2 size={13} /> Card Grid
+              <BarChart2 size={13} /> Module Grid
             </button>
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid rgba(255,255,255,0.15)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', padding: '1rem 1.25rem', border: '1px solid rgba(255,255,255,0.15)' }}>
           <div>
-            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Hours</div>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Total Curriculum Duration</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
               <Clock size={16} color="#fbbf24" /> {totalHours} Hours Total
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Phases</div>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Curriculum Phases</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
               <BookOpen size={16} color="#60a5fa" /> {phases.length} Phases ({totalCoursesCount} Courses)
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Passed & Verified</div>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Passed & Logged</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
               <CheckCircle size={16} color="#34d399" /> {progressPct}% ({completedCount}/{totalCoursesCount})
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>LLM MCQ Generator</div>
+            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Evaluation Protocol</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fef08a', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
-              <ShieldCheck size={16} color="#fef08a" /> DeepSeek AI Dynamic
+              <ShieldCheck size={16} color="#fef08a" /> Verified Assessment Engine
             </div>
           </div>
         </div>
@@ -470,7 +470,7 @@ export default function LearningPathRoadmap({
                             </span>
                             {rec.serves_next_role && (
                               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '0.15rem 0.55rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                🚀 Career Progression (Also required for {rec.next_role_code || 'Next Cadre'})
+                                Next Cadre Requirement ({rec.next_role_code || 'Cadre Progression'})
                               </span>
                             )}
                           </div>
@@ -522,7 +522,7 @@ export default function LearningPathRoadmap({
                               display: 'flex', alignItems: 'center', gap: '0.35rem'
                             }}
                           >
-                            {isEnrolled ? '✓ In Learning List' : '🚀 Enroll & Start'}
+                            {isEnrolled ? '✓ Enrolled in Pathway' : 'Enroll in Pathway'}
                           </button>
 
                           <button
@@ -532,11 +532,11 @@ export default function LearningPathRoadmap({
                               color: 'white', border: 'none', borderRadius: '8px',
                               padding: '0.45rem 1.1rem', fontSize: '0.8rem', fontWeight: 800,
                               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem',
-                              boxShadow: isPassed ? 'none' : '0 2px 8px rgba(232,114,10,0.25)'
+                              boxShadow: isPassed ? 'none' : '0 2px 8px rgba(217,119,6,0.25)'
                             }}
                           >
                             <Award size={14} />
-                            {isPassed ? `Retake Quiz (${compStatus.score}%)` : `Take AI Assessment to Pass`}
+                            {isPassed ? `Retake Evaluation (${compStatus.score}%)` : `Take Module Evaluation`}
                           </button>
 
                           <button
@@ -571,7 +571,7 @@ export default function LearningPathRoadmap({
                 <span style={{ background: phase.color, color: 'white', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem' }}>
                   {phase.badge}
                 </span>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: NAVY, margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: NAVY, margin: 0 }}>
                   {phase.title}
                 </h3>
               </div>
@@ -603,7 +603,7 @@ export default function LearningPathRoadmap({
                           onClick={() => handleStartQuiz(rec)}
                           style={{ background: ORANGE, color: 'white', border: 'none', borderRadius: '6px', padding: '0.4rem 0.85rem', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                         >
-                          <Award size={12} /> {compStatus?.passed ? 'Retake Quiz' : 'Take Quiz to Pass'}
+                          <Award size={12} /> {compStatus?.passed ? 'Retake Evaluation' : 'Take Evaluation'}
                         </button>
                       </div>
                     </div>
@@ -615,15 +615,15 @@ export default function LearningPathRoadmap({
         </div>
       )}
 
-      {/* ── Dynamic AI Course Assessment Modal ── */}
+      {/* ── Dynamic Course Assessment Modal ── */}
       {activeQuizCourse && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(5px)',
+          background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)',
           zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem'
         }}>
           <div style={{
-            background: 'white', borderRadius: '20px', maxWidth: '680px', width: '100%',
+            background: 'white', borderRadius: '12px', maxWidth: '680px', width: '100%',
             maxHeight: '90vh', overflowY: 'auto', padding: '2rem',
             boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative'
           }}>
@@ -640,27 +640,27 @@ export default function LearningPathRoadmap({
 
             {loadingQuizQuestions ? (
               <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                <Loader size={40} style={{ animation: 'spin 1s linear infinite', color: NAVY, marginBottom: '1rem' }} />
+                <Loader size={40} className="spin" style={{ color: NAVY, marginBottom: '1rem' }} />
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: NAVY, marginBottom: '0.5rem' }}>
-                  🤖 DeepSeek AI Generating Specialized Assessment
+                  Generating Module Assessment Questions
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: '420px', margin: '0 auto' }}>
-                  Creating 5 dynamic MCQs custom-crafted for <strong>{activeQuizCourse.course_title}</strong> ({activeQuizCourse.competency_code || 'OS-01'})…
+                  Generating 5 evaluation questions tailored for <strong>{activeQuizCourse.course_title}</strong> ({activeQuizCourse.competency_code || 'OS-01'})...
                 </p>
               </div>
             ) : !quizResult ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ background: '#eef2fb', color: NAVY, fontWeight: 800, fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                    AI LLM Dynamic Assessment
+                  <span style={{ background: '#eef2fb', color: NAVY, fontWeight: 800, fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
+                    Competency Assessment
                   </span>
-                  <span style={{ background: '#fff3e0', color: ORANGE, fontWeight: 800, fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                    Competency: {activeQuizCourse.competency_code || 'OS-01'}
+                  <span style={{ background: '#fff3e0', color: ORANGE, fontWeight: 800, fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '4px' }}>
+                    Code: {activeQuizCourse.competency_code || 'OS-01'}
                   </span>
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: NAVY, margin: '0 0 0.4rem 0', fontFamily: 'Poppins, sans-serif' }}>
-                  📝 {activeQuizCourse.course_title}
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: NAVY, margin: '0 0 0.4rem 0' }}>
+                  {activeQuizCourse.course_title}
                 </h3>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '1.25rem' }}>
                   Complete this 5-question evaluation to prove mastery. Scoring ≥60% updates your official competency score in the database and automatically recalculates your skill gap roadmap.
@@ -669,7 +669,7 @@ export default function LearningPathRoadmap({
                 {/* Question List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
                   {quizQuestions.map((q, qIdx) => (
-                    <div key={q.id} style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0' }}>
+                    <div key={q.id} style={{ background: '#f8fafc', borderRadius: '8px', padding: '1rem 1.25rem', border: '1px solid #e2e8f0' }}>
                       <div style={{ fontWeight: 700, fontSize: '0.88rem', color: NAVY, marginBottom: '0.65rem', lineHeight: 1.4 }}>
                         {qIdx + 1}. {q.question}
                       </div>
@@ -679,7 +679,7 @@ export default function LearningPathRoadmap({
                             key={opt.id}
                             style={{
                               display: 'flex', alignItems: 'center', gap: '0.6rem',
-                              padding: '0.55rem 0.85rem', borderRadius: '8px',
+                              padding: '0.55rem 0.85rem', borderRadius: '6px',
                               background: quizAnswers[q.id] === opt.id ? '#eef2fb' : 'white',
                               border: quizAnswers[q.id] === opt.id ? `1.5px solid ${NAVY}` : '1px solid #cbd5e1',
                               cursor: 'pointer', fontSize: '0.82rem', color: '#334155', fontWeight: quizAnswers[q.id] === opt.id ? 700 : 500
@@ -706,56 +706,53 @@ export default function LearningPathRoadmap({
                   disabled={Object.keys(quizAnswers).length < quizQuestions.length || quizSubmitting}
                   style={{
                     width: '100%', background: Object.keys(quizAnswers).length < quizQuestions.length || quizSubmitting ? '#9ca3af' : NAVY,
-                    color: 'white', border: 'none', borderRadius: '10px', padding: '0.85rem',
+                    color: 'white', border: 'none', borderRadius: '6px', padding: '0.85rem',
                     fontSize: '0.95rem', fontWeight: 800, cursor: Object.keys(quizAnswers).length < quizQuestions.length || quizSubmitting ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                   }}
                 >
-                  {quizSubmitting ? <><RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> Scoring Quiz & Recomputing Gaps…</> : '🚀 Submit Assessment & Update Skill Scores'}
+                  {quizSubmitting ? <><RefreshCw size={16} className="spin" /> Scoring Quiz & Recomputing Gaps...</> : 'Submit Evaluation & Log Evidence'}
                 </button>
               </>
             ) : (
               /* Quiz Result Screen */
               <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                 {quizResult.passed ? (
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-                    <CheckCircle size={36} />
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                    <CheckCircle size={32} />
                   </div>
                 ) : (
-                  <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-                    <AlertCircle size={36} />
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                    <AlertCircle size={32} />
                   </div>
                 )}
 
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: NAVY, marginBottom: '0.35rem' }}>
-                  {quizResult.passed ? '🎉 Assessment Passed & Verified!' : '⚠️ Assessment Not Passed'}
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: NAVY, marginBottom: '0.35rem' }}>
+                  {quizResult.passed ? 'Evaluation Passed & Verified' : 'Evaluation Score Below Benchmark'}
                 </h3>
 
-                <div style={{ fontSize: '2rem', fontWeight: 900, color: quizResult.passed ? '#16a34a' : '#dc2626', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '1.85rem', fontWeight: 800, color: quizResult.passed ? '#16a34a' : '#dc2626', marginBottom: '1rem' }}>
                   {quizResult.scorePct}% Score ({quizResult.correctCount}/{quizResult.total} Correct)
                 </div>
 
                 {quizResult.passed ? (
-                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '0.9rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Sparkles size={16} /> CLOSED LOOP DB UPDATE SUCCESSFUL
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+                    <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '0.875rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ShieldCheck size={16} /> EVIDENCE LOGGED TO COMPETENCY MATRIX
                     </div>
                     <p style={{ fontSize: '0.82rem', color: '#166534', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>
-                      Your assessment evidence has been written to the database. Competency <strong>{quizResult.compCode} ({quizResult.compName})</strong> score was updated:
+                      Assessment evidence has been committed to the repository database. Competency <strong>{quizResult.compCode} ({quizResult.compName})</strong> score updated:
                     </p>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'white', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'white', padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
                       <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Score Before: <strong>{quizResult.scoreBefore.toFixed(1)} / 5.0</strong></div>
                       <ArrowRight size={16} color="#16a34a" />
                       <div style={{ fontSize: '0.95rem', color: '#16a34a', fontWeight: 800 }}>Score After: {quizResult.scoreAfter.toFixed(1)} / 5.0 (+{(quizResult.scoreAfter - quizResult.scoreBefore).toFixed(1)} Boost)</div>
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#15803d', marginTop: '0.75rem', fontWeight: 600 }}>
-                      ⚡ Your Learning Path Roadmap is automatically redesigning to reflect your reduced skill gap!
-                    </div>
                   </div>
                 ) : (
-                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, color: '#dc2626', fontSize: '0.9rem', marginBottom: '0.4rem' }}>
-                      Minimum Passing Score: 60%
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '1.25rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+                    <div style={{ fontWeight: 800, color: '#dc2626', fontSize: '0.875rem', marginBottom: '0.4rem' }}>
+                      Required Benchmark: 60%
                     </div>
                     <p style={{ fontSize: '0.82rem', color: '#991b1b', margin: 0, lineHeight: 1.5 }}>
                       Your current competency score remains unchanged at {quizResult.scoreBefore}. Please review the course curriculum modules in Phase 1 before attempting the assessment again.
@@ -765,16 +762,17 @@ export default function LearningPathRoadmap({
 
                 <button
                   onClick={() => { setActiveQuizCourse(null); setQuizResult(null); }}
-                  style={{ background: NAVY, color: 'white', border: 'none', borderRadius: '10px', padding: '0.75rem 1.75rem', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                  className="btn-primary"
+                  style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  Return to Learning Path Roadmap
+                  Return to Learning Pathway
                 </button>
               </div>
             )}
-
           </div>
         </div>
       )}
+
 
       {/* ── Course Syllabus Modal ── */}
       {activeCourseModal && (

@@ -70,7 +70,7 @@ export default function FutureReadinessLearnerPage() {
                   </div>
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', background: isRising ? '#fee2e2' : '#fef3c7', color: isRising ? '#dc2626' : '#d97706', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                     {isRising ? <AlertCircle size={12} /> : <CheckCircle2 size={12} />}
-                    {isRising ? '🔴 Rising Priority' : '🟡 Stable Baseline'}
+                    {isRising ? 'Rising Priority' : 'Stable Baseline'}
                   </span>
                 </div>
 

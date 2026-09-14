@@ -263,7 +263,9 @@ export default function ReferenceMaterialsPage() {
             {/* Modal Header */}
             <div style={{ padding: '1.25rem 1.5rem', background: NAVY, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>📄 {activeMaterial.filename}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <FileText size={18} /> {activeMaterial.filename}
+                </div>
                 <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '0.15rem' }}>Document Chunks & Baseline Question Provenance</div>
               </div>
               <button onClick={() => setActiveMaterial(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
@@ -365,7 +367,7 @@ export default function ReferenceMaterialsPage() {
 
                         {q.explanation && (
                           <div style={{ fontSize: '0.78rem', color: '#4b5563', background: '#f3f4f6', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
-                            💡 <strong>Source Explanation:</strong> {q.explanation}
+                            <strong>Source Explanation:</strong> {q.explanation}
                           </div>
                         )}
                       </div>

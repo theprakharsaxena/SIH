@@ -80,8 +80,8 @@ export default function LoginPage() {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
         <div style={{ width: '100%', maxWidth: '420px' }}>
           <div style={{ marginBottom: '2rem' }}>
-            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, color: NAVY, fontSize: '1.75rem', marginBottom: '0.3rem' }}>
-              Welcome back 👋
+            <h2 style={{ fontWeight: 800, color: NAVY, fontSize: '1.6rem', marginBottom: '0.3rem' }}>
+              Sign In to MoSPI Portal
             </h2>
             <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
               Sign in to your learning portal

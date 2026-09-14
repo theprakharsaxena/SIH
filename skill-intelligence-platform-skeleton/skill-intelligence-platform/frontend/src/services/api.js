@@ -58,6 +58,11 @@ export const updateMe = async (payload) => {
   return res.data;
 };
 
+export const switchDemoPersona = async (roleCode) => {
+  const res = await api.post('/auth/demo-switch', { role_code: roleCode });
+  return res.data;
+};
+
 /* ── Roles ── */
 export const fetchRoles = async () => {
   const res = await api.get('/competencies/roles');

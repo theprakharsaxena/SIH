@@ -12,19 +12,12 @@ import RegisterPage  from './pages/RegisterPage';
 import LearnerLayout from './layouts/LearnerLayout';
 import AdminLayout   from './layouts/AdminLayout';
 
-import ArchitecturePage from './pages/ArchitecturePage';
-
 // Learner pages
-import LearnerDashboard        from './pages/learner/Dashboard';
-import CompetenciesPage        from './pages/learner/CompetenciesPage';
-import DemonstratedLevelsPage  from './pages/learner/DemonstratedLevelsPage';
-import SkillGapAnalysisPage    from './pages/learner/SkillGapAnalysisPage';
-import LearningRoadmapPage     from './pages/learner/LearningRoadmapPage';
-import RecommendationsPage     from './pages/learner/RecommendationsPage';
-import CoursesPage             from './pages/learner/CoursesPage';
-import LearnerAssessment       from './pages/learner/AssessmentPage';
-import ProfilePage             from './pages/learner/ProfilePage';
-import ProgressPage            from './pages/learner/ProgressPage';
+import LearnerDashboard  from './pages/learner/Dashboard';
+import CoursesPage       from './pages/learner/CoursesPage';
+import LearnerAssessment from './pages/learner/AssessmentPage';
+import ProfilePage       from './pages/learner/ProfilePage';
+import ProgressPage      from './pages/learner/ProgressPage';
 import FutureReadinessLearnerPage from './pages/learner/FutureReadinessLearnerPage';
 
 // Admin pages
@@ -60,18 +53,12 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index               element={<LearnerDashboard />} />
-            <Route path="competencies"   element={<CompetenciesPage />} />
-            <Route path="demonstrated"  element={<DemonstratedLevelsPage />} />
-            <Route path="gaps"          element={<SkillGapAnalysisPage />} />
-            <Route path="roadmap"       element={<LearningRoadmapPage />} />
-            <Route path="recommendations" element={<RecommendationsPage />} />
-            <Route path="courses"       element={<CoursesPage />} />
-            <Route path="assessment"    element={<LearnerAssessment />} />
-            <Route path="progress"      element={<ProgressPage />} />
+            <Route index        element={<LearnerDashboard />} />
+            <Route path="courses"    element={<CoursesPage />} />
+            <Route path="assessment" element={<LearnerAssessment />} />
+            <Route path="progress"   element={<ProgressPage />} />
             <Route path="future-readiness" element={<FutureReadinessLearnerPage />} />
-            <Route path="profile"       element={<ProfilePage />} />
-            <Route path="architecture"  element={<ArchitecturePage />} />
+            <Route path="profile"    element={<ProfilePage />} />
           </Route>
 
           {/* ── Admin portal (admin-only protected) ── */}
@@ -92,7 +79,6 @@ export default function App() {
             <Route path="training-effectiveness" element={<TrainingEffectivenessPage />} />
             <Route path="reference-materials" element={<ReferenceMaterialsPage />} />
             <Route path="integration-status" element={<IntegrationStatusPage />} />
-            <Route path="architecture" element={<ArchitecturePage />} />
           </Route>
 
           {/* ── Fallback ── */}

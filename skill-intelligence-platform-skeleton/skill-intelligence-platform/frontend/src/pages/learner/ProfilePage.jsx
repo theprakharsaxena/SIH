@@ -48,10 +48,6 @@ export default function ProfilePage() {
     full_name: user?.full_name || '',
     designation: user?.designation || '',
     department: user?.department || '',
-    wing_division: user?.wing_division || 'Data Quality Assurance Division (DQAD), Kolkata',
-    current_assignment: user?.current_assignment || 'Statistical Data Processing & Automation',
-    domain_specialization: user?.domain_specialization || 'Python, SQL, Cloud Computing',
-    prior_training: user?.prior_training || 'SQL Fundamentals, Survey Sampling Basic',
     phone: user?.phone || '',
     role_code: user?.role_code || 'SSO',
     years_experience: user?.years_experience || '',
@@ -149,24 +145,12 @@ export default function ProfilePage() {
           </div>
 
           <div style={rowStyle}>
-            <Field label="Wing / Division" icon={Briefcase}>
-              <input value={form.wing_division} onChange={update('wing_division')} placeholder="e.g. DQAD, Kolkata" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
+            <Field label="Designation" icon={Briefcase}>
+              <input value={form.designation} onChange={update('designation')} placeholder="e.g. Statistical Officer" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
             </Field>
-            <Field label="Current Official Mandate / Assignment" icon={Briefcase}>
-              <input value={form.current_assignment} onChange={update('current_assignment')} placeholder="e.g. Statistical Data Processing & Automation" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
+            <Field label="Years of Experience" icon={Briefcase}>
+              <input type="number" value={form.years_experience} onChange={update('years_experience')} placeholder="e.g. 8" min="0" max="40" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
             </Field>
-          </div>
-
-          <div style={rowStyle}>
-            <Field label="Domain & Technical Specialization" icon={Briefcase}>
-              <input value={form.domain_specialization} onChange={update('domain_specialization')} placeholder="e.g. Python, SQL, Cloud Computing" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
-            </Field>
-            <Field label="Prior Completed Training" icon={GraduationCap}>
-              <input value={form.prior_training} onChange={update('prior_training')} placeholder="e.g. SQL Fundamentals" style={inputStyle} onFocus={e => e.target.style.borderColor = NAVY} onBlur={e => e.target.style.borderColor = '#d1d5db'} />
-            </Field>
-          </div>
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.65rem 0.85rem', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: ORANGE, fontWeight: 700 }}>AI Note:</span> Prior training and official assignment details are used by the AI engine to deduplicate recommendations and calibrate learning roadmap starting points.
           </div>
 
           <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '0.5rem 0' }} />

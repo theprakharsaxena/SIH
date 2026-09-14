@@ -72,6 +72,18 @@ def _history_score(
     return 0.0 if course_id in enrollments else 1.0
 
 
+CONSEQUENCE_MAP = {
+    "OS-01": "without this, survey questionnaire design risks data collection bias and non-sampling errors.",
+    "OS-02": "without this, sample estimation routines carry avoidable standard error in field surveys.",
+    "OS-03": "without this, GDP estimation and GVA compilation risk estimation drift against national standards.",
+    "OS-10": "without this, microdata validation checks lack structured quality audit trails.",
+    "TC-01": "without this, automated statistical data processing relies on manual, error-prone workflows.",
+    "TC-03": "without this, querying large-scale census and survey microdata tables experiences severe latency.",
+    "DG-02": "without this, official microdata handling risks regulatory non-compliance under DPDP Act 2023.",
+    "BM-01": "without this, cross-divisional team coordination and field operations lack strategic alignment.",
+}
+
+
 def _build_reason_text(
     course_title: str,
     competency_name: str,
@@ -82,18 +94,20 @@ def _build_reason_text(
     course_level: str,
     priority: str,
     already_enrolled: bool,
+    competency_code: str = "",
 ) -> str:
-    category_label = {"A": "no gap", "B": "slight gap", "C": "considerable gap"}.get(category, "gap")
+    category_label = {"A": "no gap", "B": "slight gap", "C": "critical deficit"}.get(category, "gap")
+    consequence = CONSEQUENCE_MAP.get(competency_code, f"without this, your cadre role performance remains below benchmark ({category_label}).")
     parts = [
-        f"Recommended because: Your role requires {competency_name} at level {required_score:.1f}.",
-        f"Current level: {current_score:.1f} ({category_label}, gap = {gap:.1f}).",
+        f"Closes your {competency_name} gap — {consequence}",
+        f"(Role target: {required_score:.1f} Pts, Current: {current_score:.1f} Pts, Deficit: -{gap:.1f} Pts).",
     ]
     if course_level:
-        parts.append(f"This {course_level.lower()}-level course matches your current proficiency.")
+        parts.append(f"This {course_level.lower()}-level module matches your current proficiency.")
     if priority == "critical":
-        parts.append("⚠ This is a critical competency for your role.")
+        parts.append("Mandatory role priority.")
     if already_enrolled:
-        parts.append("Note: You have previously enrolled in this course.")
+        parts.append("Note: You have previously enrolled in this module.")
     return " ".join(parts)
 
 
@@ -216,6 +230,7 @@ def recommend_courses(
             course_level=course.level or "",
             priority=primary_gap.priority,
             already_enrolled=already_enrolled,
+            competency_code=primary_gap.competency_code,
         )
 
         rec = CourseRecommendation(

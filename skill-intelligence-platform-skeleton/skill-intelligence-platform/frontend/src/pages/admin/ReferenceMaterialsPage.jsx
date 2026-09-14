@@ -96,6 +96,16 @@ export default function ReferenceMaterialsPage() {
           <p style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.3rem' }}>
             Upload baseline reference documents (PDF/DOCX/TXT) per role or course content used for RAG diagnostic & post-course assessment question generation.
           </p>
+          
+          {/* ── 6. ADMIN DASHBOARD NON-BLOCKING BATCH CAPTION ── */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem',
+            background: '#eef2fb', border: '1px solid #bfdbfe', padding: '0.3rem 0.75rem', borderRadius: '6px',
+            fontSize: '0.75rem', fontWeight: 700, color: NAVY
+          }}>
+            <ShieldCheck size={14} color="#2563eb" />
+            <span>Workflow Note: Reviewed once per course upload — never blocks an official.</span>
+          </div>
         </div>
         <button
           onClick={loadMaterials}

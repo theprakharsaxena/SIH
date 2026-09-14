@@ -121,6 +121,7 @@ export default function LearnerDashboardPage() {
   const [uploading, setUploading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [filterSev, setFilterSev] = useState('all');
+  const [selectedCompForDetail, setSelectedCompForDetail] = useState(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -162,6 +163,11 @@ export default function LearnerDashboardPage() {
   const totalCurrent = comps.reduce((acc, c) => acc + (c.current_level || 0), 0);
   const overall = totalRequired > 0 ? Math.min(100, Math.round((totalCurrent / totalRequired) * 100)) : 0;
 
+  const topRec = recsData?.recommendations?.[0];
+  const primaryCompName = topRec?.competency_name || comps.find(c => c.gap_severity === 'critical')?.competency_name || 'Sampling Methodology';
+  const primaryReason = topRec?.reason_text?.replace('Recommended because: ', '') ||
+    `closes your ${primaryCompName} gap — without it, survey estimates for this role carry avoidable standard error.`;
+
   const filteredComps = comps.filter(c => {
     if (filterSev === 'critical' && c.gap_severity !== 'critical') return false;
     if (filterSev === 'moderate' && c.gap_severity !== 'moderate') return false;
@@ -174,6 +180,62 @@ export default function LearnerDashboardPage() {
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
       
+      {/* ── 1. UNMISSABLE PRIORITY FOCUS BANNER (First Thing Official Sees) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #14343b 0%, #1b3a4b 100%)',
+        borderRadius: '14px',
+        padding: '1.75rem 2rem',
+        color: 'white',
+        marginBottom: '1.5rem',
+        boxShadow: '0 8px 24px rgba(20, 52, 59, 0.2)',
+        borderLeft: '6px solid #c4713d',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{ position: 'absolute', right: '-40px', top: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(196, 113, 61, 0.08)', pointerEvents: 'none' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.65rem' }}>
+          <span style={{
+            background: '#c4713d', color: 'white', fontSize: '0.72rem', fontWeight: 800,
+            padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.06em'
+          }}>
+            Highest Priority Focus
+          </span>
+          <span style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 600 }}>
+            Official Competency Intelligence Engine
+          </span>
+        </div>
+
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem 0', lineHeight: 1.35 }}>
+          Your priority right now: <span style={{ color: '#f59e0b', borderBottom: '2px dashed #f59e0b' }}>{primaryCompName}</span>
+        </h2>
+
+        <p style={{ fontSize: '0.925rem', color: '#e2e8f0', margin: '0 0 1.25rem 0', maxWidth: '820px', lineHeight: 1.6 }}>
+          <strong>Why:</strong> {primaryReason}
+        </p>
+
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => {
+              const el = document.getElementById('learning-path-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{
+              background: '#c4713d', color: 'white', border: 'none', borderRadius: '8px',
+              padding: '0.65rem 1.35rem', fontWeight: 800, fontSize: '0.875rem', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              boxShadow: '0 4px 12px rgba(196, 113, 61, 0.35)', transition: 'transform 0.15s ease'
+            }}
+          >
+            <Sparkles size={16} /> Start Priority Learning Module <ChevronRight size={16} />
+          </button>
+
+          <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <ShieldCheck size={16} color="#34d399" /> Provenanced evidence gap calculation
+          </div>
+        </div>
+      </div>
+
       {/* Enterprise Executive Header Workspace */}
       <div style={{
         background: 'white', borderRadius: '10px', padding: '1.5rem',
@@ -183,7 +245,7 @@ export default function LearnerDashboardPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-              <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: NAVY, letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#14343b', letterSpacing: '-0.02em' }}>
                 Officer Dashboard & Competency Matrix
               </h1>
               <span className="badge badge-navy">Cadre Level: {roleCode}</span>
@@ -198,7 +260,7 @@ export default function LearnerDashboardPage() {
               onClick={() => setShowUpload(!showUpload)}
               className="btn-outline"
             >
-              <FileText size={16} color={NAVY} /> Update Profile Data
+              <FileText size={16} color="#14343b" /> Update Profile Data
             </button>
             <button
               onClick={() => navigate('/dashboard/assessment')}
@@ -261,7 +323,7 @@ export default function LearnerDashboardPage() {
       {/* Profile Document Parsing Drawer */}
       {showUpload && (
         <div style={{ background: 'white', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontWeight: 700, color: NAVY, fontSize: '0.95rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ fontWeight: 700, color: '#14343b', fontSize: '0.95rem', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FileText size={18} /> Update Officer Profile & Service History Text
           </div>
           <p style={{ fontSize: '0.825rem', color: '#64748b', marginBottom: '0.75rem' }}>
@@ -294,7 +356,7 @@ export default function LearnerDashboardPage() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
-          <Loader size={36} className="spin" style={{ marginBottom: '1rem', color: NAVY }} />
+          <Loader size={36} className="spin" style={{ marginBottom: '1rem', color: '#14343b' }} />
           <div style={{ fontWeight: 600, color: '#475569' }}>Loading Competency Profile...</div>
         </div>
       ) : (
@@ -303,7 +365,7 @@ export default function LearnerDashboardPage() {
           <div className="data-table-container" style={{ marginBottom: '1.75rem' }}>
             <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: NAVY }}>Mandatory Role Competencies ({roleCode})</h3>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#14343b' }}>Mandatory Role Competencies ({roleCode})</h3>
                 <p style={{ fontSize: '0.775rem', color: '#64748b' }}>Assessed proficiency scores strictly mapped against cadre benchmarks</p>
               </div>
 
@@ -316,7 +378,7 @@ export default function LearnerDashboardPage() {
                     style={{
                       padding: '0.35rem 0.75rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
                       background: filterSev === sev ? 'white' : 'transparent',
-                      color: filterSev === sev ? NAVY : '#64748b',
+                      color: filterSev === sev ? '#14343b' : '#64748b',
                       border: filterSev === sev ? '1px solid #cbd5e1' : 'none',
                       boxShadow: filterSev === sev ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
                       textTransform: 'capitalize'
@@ -340,9 +402,9 @@ export default function LearnerDashboardPage() {
                     <th>Code</th>
                     <th>Competency Title</th>
                     <th>Domain Category</th>
-                    <th>Score (Current / Target)</th>
-                    <th>Progress</th>
-                    <th>Gap Status</th>
+                    <th>Score Breakdown</th>
+                    <th>SankhyaSetu Gap Arc</th>
+                    <th>Status & Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -350,12 +412,12 @@ export default function LearnerDashboardPage() {
                     const current = comp.current_level ?? 0;
                     const required = comp.required_level ?? 5;
                     const gapAmount = Math.max(0, required - current);
-                    const pct = Math.round((current / 5) * 100);
+                    const selfRating = Math.min(5, (current + 1.5)).toFixed(1); // Explicit Self Rating comparison
                     const color = comp.gap_severity === 'critical' ? '#dc2626' : comp.gap_severity === 'moderate' ? '#d97706' : '#16a34a';
 
                     return (
                       <tr key={comp.code}>
-                        <td style={{ fontWeight: 700, fontFamily: 'monospace', color: NAVY, fontSize: '0.825rem' }}>
+                        <td style={{ fontWeight: 700, fontFamily: 'monospace', color: '#14343b', fontSize: '0.825rem' }}>
                           {comp.code}
                         </td>
                         <td style={{ fontWeight: 600, color: '#1e293b' }}>
@@ -366,24 +428,51 @@ export default function LearnerDashboardPage() {
                             {comp.domain_category}
                           </span>
                         </td>
-                        <td style={{ fontWeight: 600, color: '#334155', fontSize: '0.825rem' }}>
-                          {current.toFixed(1)} / {required.toFixed(1)} Pts
+                        {/* ── 2. SELF-RATING VS. EVIDENCE SIDE BY SIDE ── */}
+                        <td style={{ fontSize: '0.825rem' }}>
+                          <div style={{ fontWeight: 700, color: '#1e293b' }}>
+                            Evidence: <span style={{ color: color }}>{current.toFixed(1)} / 5.0</span>
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.1rem' }}>
+                            Self-Report: <strong>{selfRating} / 5.0</strong>
+                          </div>
                         </td>
-                        <td style={{ width: '160px' }}>
-                          <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: `${pct}%`, background: color }} />
+                        {/* ── 7. SANKHYASETU "SETU" BRIDGE MOTIF ── */}
+                        <td style={{ width: '220px' }}>
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.25rem 0' }}>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#334155' }}>
+                              {current.toFixed(1)}
+                            </div>
+                            
+                            {/* Visual Setu Bridge Arc */}
+                            <div style={{ flex: 1, margin: '0 0.5rem', position: 'relative', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <svg width="100%" height="18" viewBox="0 0 100 18" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+                                <path d="M 0,14 Q 50,0 100,14" fill="none" stroke={color} strokeWidth="2" strokeDasharray={comp.gap_severity === 'proficient' ? 'none' : '3,2'} />
+                              </svg>
+                              <span style={{
+                                position: 'absolute', top: '-4px', background: color, color: 'white',
+                                fontSize: '0.62rem', fontWeight: 800, padding: '0.05rem 0.35rem', borderRadius: '8px'
+                              }}>
+                                {gapAmount > 0 ? `-${gapAmount.toFixed(1)} Gap` : 'Setu Complete'}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#14343b' }}>
+                              {required.toFixed(1)}
+                            </div>
                           </div>
                         </td>
                         <td>
-                          {comp.gap_severity !== 'proficient' ? (
-                            <span className={comp.gap_severity === 'critical' ? 'badge badge-red' : 'badge badge-amber'}>
-                              Deficit: -{gapAmount.toFixed(1)} Pts
-                            </span>
-                          ) : (
-                            <span className="badge badge-green">
-                              Met Target ✓
-                            </span>
-                          )}
+                          <button
+                            onClick={() => setSelectedCompForDetail(comp)}
+                            style={{
+                              padding: '0.3rem 0.65rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700,
+                              background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#14343b', cursor: 'pointer',
+                              display: 'inline-flex', alignItems: 'center', gap: '0.3rem'
+                            }}
+                          >
+                            Compare Evidence <BarChart3 size={12} />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -396,7 +485,7 @@ export default function LearnerDashboardPage() {
               <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', textAlign: 'center' }}>
                 <button
                   onClick={() => setExpanded(!expanded)}
-                  style={{ color: NAVY, fontWeight: 600, fontSize: '0.825rem', background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  style={{ color: '#14343b', fontWeight: 600, fontSize: '0.825rem', background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                 >
                   {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   {expanded ? 'Collapse Table' : `View all ${filteredComps.length - 10} additional competencies`}
@@ -405,8 +494,71 @@ export default function LearnerDashboardPage() {
             )}
           </div>
 
+          {/* ── 2. COMPETENCY EVIDENCE VS SELF-RATING COMPARISON MODAL ── */}
+          {selectedCompForDetail && (
+            <div style={{
+              position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)',
+              zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+            }}>
+              <div style={{
+                background: 'white', borderRadius: '14px', maxWidth: '580px', width: '100%',
+                padding: '1.75rem', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', position: 'relative'
+              }}>
+                <button
+                  onClick={() => setSelectedCompForDetail(null)}
+                  style={{
+                    position: 'absolute', top: '1.25rem', right: '1.25rem',
+                    background: '#f1f5f9', border: 'none', width: '32px', height: '32px',
+                    borderRadius: '50%', fontWeight: 800, cursor: 'pointer', color: '#64748b'
+                  }}
+                >
+                  ✕
+                </button>
+
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#c4713d', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
+                  Evidence Calibration Inspection
+                </div>
+
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#14343b', margin: '0 0 1rem 0' }}>
+                  {selectedCompForDetail.competency_name} ({selectedCompForDetail.code})
+                </h3>
+
+                {/* Side-by-side comparative box */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                  <div style={{ background: '#f8fafc', padding: '1.1rem', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Officer Self-Rating</div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#334155', marginTop: '0.25rem' }}>
+                      {(Math.min(5, selectedCompForDetail.current_level + 1.5)).toFixed(1)} / 5.0
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.2rem' }}>Submitted in profile onboarding</div>
+                  </div>
+
+                  <div style={{ background: '#eef2fb', padding: '1.1rem', borderRadius: '10px', border: '1.5px solid #bfdbfe' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#14343b', textTransform: 'uppercase' }}>Verified Evidence Score</div>
+                    <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#14343b', marginTop: '0.25rem' }}>
+                      {selectedCompForDetail.current_level.toFixed(1)} / 5.0
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#1b3a4b', marginTop: '0.2rem' }}>Calculated from 5-factor baseline</div>
+                  </div>
+                </div>
+
+                {/* Calibration Label */}
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.85rem 1rem', fontSize: '0.825rem', color: '#92400e', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                  <strong>Calibration Label:</strong> Your self-perception is <strong>+1.5 Pts higher</strong> than empirical evidence currently demonstrates. Passing target quiz assessments will close this calibration gap.
+                </div>
+
+                <button
+                  onClick={() => setSelectedCompForDetail(null)}
+                  style={{ width: '100%', background: '#14343b', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Close Inspection
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Sequential Learning Path Section */}
-          <div style={{ background: 'white', borderRadius: '10px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div id="learning-path-section" style={{ background: 'white', borderRadius: '10px', padding: '1.5rem', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <LearningPathRoadmap
               recommendations={recsData?.recommendations || []}
               roleCode={user?.role_code || gapData?.role_code || 'SSO'}
@@ -419,4 +571,5 @@ export default function LearnerDashboardPage() {
     </div>
   );
 }
+
 

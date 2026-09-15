@@ -662,9 +662,24 @@ export default function LearningPathRoadmap({
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: NAVY, margin: '0 0 0.4rem 0' }}>
                   {activeQuizCourse.course_title}
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '1.25rem' }}>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.75rem' }}>
                   Complete this 5-question evaluation to prove mastery. Scoring ≥60% updates your official competency score in the database and automatically recalculates your skill gap roadmap.
                 </p>
+
+                {/* ── 1-CLICK PRELOADED STUDY MATERIAL PROVENANCE ── */}
+                <div style={{
+                  background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px',
+                  padding: '0.65rem 0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center',
+                  justify: 'space-between', flexWrap: 'wrap', gap: '0.5rem'
+                }}>
+                  <div style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <BookOpen size={14} color="#c4713d" />
+                    <span>Provenanced Material: <strong>MoSPI CPI & Survey Methodology Manual (2025)</strong></span>
+                  </div>
+                  <span style={{ fontSize: '0.68rem', background: '#dcfce7', color: '#166534', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                    ✓ 1-Click Study Material Loaded
+                  </span>
+                </div>
 
                 {/* Question List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
